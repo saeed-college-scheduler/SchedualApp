@@ -8,26 +8,15 @@ using System.Windows.Forms;
 
 namespace SchedualApp
 {
-    // يجب أن تكون كلمة partial موجودة هنا
     public partial class LecturerManagementControl : UserControl
     {
-        private TableLayoutPanel _mainLayout;
-        private DataGridView _dataGridView;
-        private Panel _formPanel;
-        private TextBox _txtFirstName;
-        private TextBox _txtLastName;
-        private TextBox _txtAcademicRank;
-        private TextBox _txtMaxWorkload;
-        private CheckBox _chkIsActive;
-        private Button _btnNew;
-        private Button _btnSave;
-        private Button _btnDelete;
+        // المتغيرات الخاصة بمنطق العمل فقط
         private BindingList<Lecturer> _bindingList;
         private int _selectedLecturerId;
 
         public LecturerManagementControl()
         {
-            // هذا هو استدعاء الدالة التي تنشئ الواجهة برمجياً
+            // هذا هو استدعاء الدالة التي تنشئ الواجهة برمجياً من ملف Designer.cs
             InitializeComponent();
             this.Load += LecturerManagementControl_Load;
         }
@@ -35,19 +24,6 @@ namespace SchedualApp
         private async void LecturerManagementControl_Load(object sender, EventArgs e)
         {
             await LoadDataAsync();
-        }
-
-        // هذه الدالة هي التي تنشئ الواجهة برمجياً
-        private void InitializeComponent()
-        {
-            this.SuspendLayout();
-            // 
-            // LecturerManagementControl
-            // 
-            this.Name = "LecturerManagementControl";
-            this.Load += new System.EventHandler(this.LecturerManagementControl_Load_1);
-            this.ResumeLayout(false);
-
         }
 
         // دالة تحميل البيانات غير المتزامنة
@@ -59,7 +35,14 @@ namespace SchedualApp
                 {
                     var list = await ctx.Lecturers.AsNoTracking().ToListAsync();
                     _bindingList = new BindingList<Lecturer>(list);
-                    _dataGridView.DataSource = _bindingList;
+
+                    // فحص null check لمنع NullReferenceException
+                    if (_dataGridView != null)
+                    {
+                        _dataGridView.DataSource = _bindingList;
+                        // يمكن إضافة تنسيق DataGridView هنا
+                        _dataGridView.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
+                    }
                 }
             }
             catch (Exception ex)
@@ -69,6 +52,11 @@ namespace SchedualApp
         }
 
         // دالة الحفظ غير المتزامنة
+        private async void BtnSave_Click(object sender, EventArgs e)
+        {
+            await BtnSave_ClickAsync();
+        }
+
         private async Task BtnSave_ClickAsync()
         {
             if (!ValidateForm(out int maxWorkload)) return;
@@ -116,6 +104,11 @@ namespace SchedualApp
         }
 
         // دالة الحذف غير المتزامنة
+        private async void BtnDelete_Click(object sender, EventArgs e)
+        {
+            await BtnDelete_ClickAsync();
+        }
+
         private async Task BtnDelete_ClickAsync()
         {
             if (_selectedLecturerId == 0) return;
@@ -146,7 +139,9 @@ namespace SchedualApp
         // دالة اختيار الصف في DataGridView
         private void DataGridView_SelectionChanged(object sender, EventArgs e)
         {
-            if (_dataGridView.SelectedRows.Count == 0) return;
+            // فحص null check لمنع NullReferenceException
+            if (_dataGridView == null || _dataGridView.SelectedRows.Count == 0) return;
+
             var lecturer = _dataGridView.SelectedRows[0].DataBoundItem as Lecturer;
             if (lecturer != null)
             {
@@ -180,7 +175,12 @@ namespace SchedualApp
             _txtAcademicRank.Text = string.Empty;
             _txtMaxWorkload.Text = "12"; // القيمة الافتراضية
             _chkIsActive.Checked = true; // القيمة الافتراضية
-            _dataGridView.ClearSelection();
+
+            // فحص null check لمنع NullReferenceException
+            if (_dataGridView != null)
+            {
+                _dataGridView.ClearSelection();
+            }
         }
 
         // دالة التحقق من صحة الإدخال
@@ -201,11 +201,6 @@ namespace SchedualApp
             }
 
             return true;
-        }
-
-        private void LecturerManagementControl_Load_1(object sender, EventArgs e)
-        {
-
         }
     }
 }

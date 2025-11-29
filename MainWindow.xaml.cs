@@ -88,6 +88,11 @@ namespace SchedualApp
             LoadWinFormsControl(new CourseLevelManagementControl(), "CourseLevel");
         }
 
+        private void CourseLecturerButton_Click(object sender, RoutedEventArgs e)
+        {
+            LoadWinFormsControl(new CourseLecturerManagementControl(), "CourseLecturer");
+        }
+
         private void ViewerButton_Click(object sender, RoutedEventArgs e)
         {
             // سنقوم بتصميم TimetableViewerControl في المرحلة القادمة

@@ -25,6 +25,7 @@
 			<Button Content="Time Slots Definition" Click="TimeSlotsButton_Click" Margin="5,0" Tag="TimeSlots"/>
 			<Button Content="Timetable Generation" Click="GenerationButton_Click" Margin="5,0" Tag="Generation"/>
 			<Button Content="Course-Level Management" Click="CourseLevelButton_Click" Margin="5,0" Tag="CourseLevel"/>
+			<Button Content="Course-Lecturer Management" Click="CourseLecturerButton_Click" Margin="5,0" Tag="CourseLecturer"/>
 			<Button Content="Timetable Viewer" Click="ViewerButton_Click" Margin="5,0" Tag="Viewer"/>
 		</StackPanel>
 
