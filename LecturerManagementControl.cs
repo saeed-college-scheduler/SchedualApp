@@ -1,206 +1,532 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data;
 using System.Data.Entity;
+using System.Data.Entity.Validation;
 using System.Drawing;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Reflection;
 
 namespace SchedualApp
 {
     public partial class LecturerManagementControl : UserControl
     {
-        // المتغيرات الخاصة بمنطق العمل فقط
-        private BindingList<Lecturer> _bindingList;
-        private int _selectedLecturerId;
+        // Helper class for CheckedListBox items (Availability)
+        public class AvailabilityItem
+        {
+            public DayOfWeek DayOfWeek { get; set; }
+            public int TimeSlotDefinitionID { get; set; }
+            public string DisplayName { get; set; }
+        }
+
+        // Helper class for CheckedListBox items (Courses)
+        public class CourseItem
+        {
+            public int CourseID { get; set; }
+            public string TeachingType { get; set; } // Internal value for DB: "Lecture" or "Practical"
+            public string DisplayName { get; set; }
+        }
+
+        // Helper class for Arabic Day Names
+        public static class ArabicDayNames
+        {
+            public static string GetArabicDayName(DayOfWeek day)
+            {
+                switch (day)
+                {
+                    case DayOfWeek.Sunday: return "الأحد";
+                    case DayOfWeek.Monday: return "الإثنين";
+                    case DayOfWeek.Tuesday: return "الثلاثاء";
+                    case DayOfWeek.Wednesday: return "الأربعاء";
+                    case DayOfWeek.Thursday: return "الخميس";
+                    case DayOfWeek.Friday: return "الجمعة";
+                    case DayOfWeek.Saturday: return "السبت";
+                    default: return string.Empty;
+                }
+            }
+        }
+
+        private SchedualAppModel _context;
+        private BindingList<Lecturer> _lecturers;
+        private Lecturer _currentLecturer;
+
+        // Internal lists for secondary data
+        private BindingList<LecturerAvailability> _availabilities;
+        private BindingList<CourseLecturer> _courseLecturers;
+
 
         public LecturerManagementControl()
         {
-            // هذا هو استدعاء الدالة التي تنشئ الواجهة برمجياً من ملف Designer.cs
             InitializeComponent();
-            this.Load += LecturerManagementControl_Load;
+
+            _context = new SchedualAppModel();
+
+            // Attach event handlers using the CORRECT control names (Private Fields)
+            _lecturerGrid.SelectionChanged += LecturerGrid_SelectionChanged;
+            _btnSave.Click += BtnSave_Click;
+            _btnDelete.Click += BtnDelete_Click;
+            _btnNew.Click += BtnNew_Click;
+
+            ClearForm();
+            LoadInitialDataAsync();
         }
 
-        private async void LecturerManagementControl_Load(object sender, EventArgs e)
+        private void ClearForm()
         {
-            await LoadDataAsync();
+            _currentLecturer = null;
+
+            _txtFirstName.Clear();
+            _txtLastName.Clear();
+            _txtAcademicRank.Clear();
+            _txtMaxWorkload.Text = "12"; // Default workload
+            _chkIsActive.Checked = true;
+
+            _btnDelete.Enabled = false;
+            _btnSave.Text = "حفظ محاضر جديد";
+
+            // Clear secondary data grids and list boxes
+            _availabilityGrid.DataSource = null;
+            _courseLecturerGrid.DataSource = null;
+
+            // Clear CheckedListBoxes
+            for (int i = 0; i < _availabilityListBox.Items.Count; i++)
+            {
+                _availabilityListBox.SetItemChecked(i, false);
+            }
+
+            for (int i = 0; i < _courseListBox.Items.Count; i++)
+            {
+                _courseListBox.SetItemChecked(i, false);
+            }
         }
 
-        // دالة تحميل البيانات غير المتزامنة
-        private async Task LoadDataAsync()
+        private async Task LoadInitialDataAsync()
         {
             try
             {
-                using (var ctx = new SchedualAppModel())
+                // 1. Load Lecturers
+                await _context.Lecturers.LoadAsync();
+                _lecturers = _context.Lecturers.Local.ToBindingList();
+
+                // Rebind the grid to the anonymous object list
+                _lecturerGrid.DataSource = _lecturers.Select(l => new
                 {
-                    var list = await ctx.Lecturers.AsNoTracking().ToListAsync();
-                    _bindingList = new BindingList<Lecturer>(list);
+                    l.LecturerID,
+                    FullName = $"{l.FirstName} {l.LastName}",
+                    l.AcademicRank,
+                    l.MaxWorkload,
+                    l.IsActive
+                }).ToList();
+                _lecturerGrid.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
 
-                    // فحص null check لمنع NullReferenceException
-                    if (_dataGridView != null)
-                    {
-                        _dataGridView.DataSource = _bindingList;
-                        // يمكن إضافة تنسيق DataGridView هنا
-                        _dataGridView.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error loading data: " + ex.ToString(), "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
+                // 2. Load Availability ListBox Data (Days and Time Slots)
+                // Filter out Friday (5) and Saturday (6)
+                var days = Enum.GetValues(typeof(DayOfWeek)).Cast<DayOfWeek>().Where(d => d != DayOfWeek.Friday && d != DayOfWeek.Saturday);
+                var timeSlots = await _context.TimeSlotDefinitions.OrderBy(ts => ts.SlotNumber).ToListAsync();
+                var availabilityItems = new List<AvailabilityItem>();
 
-        // دالة الحفظ غير المتزامنة
-        private async void BtnSave_Click(object sender, EventArgs e)
-        {
-            await BtnSave_ClickAsync();
-        }
-
-        private async Task BtnSave_ClickAsync()
-        {
-            if (!ValidateForm(out int maxWorkload)) return;
-
-            try
-            {
-                using (var ctx = new SchedualAppModel())
+                foreach (var day in days)
                 {
-                    if (_selectedLecturerId == 0)
+                    foreach (var slot in timeSlots)
                     {
-                        // إنشاء كيان جديد
-                        var newLecturer = new Lecturer
+                        availabilityItems.Add(new AvailabilityItem
                         {
-                            FirstName = _txtFirstName.Text.Trim(),
-                            LastName = _txtLastName.Text.Trim(),
-                            AcademicRank = _txtAcademicRank.Text.Trim(),
-                            MaxWorkload = maxWorkload,
-                            IsActive = _chkIsActive.Checked
-                        };
-                        ctx.Lecturers.Add(newLecturer);
+                            DayOfWeek = day,
+                            TimeSlotDefinitionID = slot.TimeSlotDefinitionID,
+                            DisplayName = $"{ArabicDayNames.GetArabicDayName(day)} - {slot.StartTime.ToString(@"hh\:mm")} - {slot.EndTime.ToString(@"hh\:mm")}"
+                        });
                     }
-                    else
-                    {
-                        // تحديث كيان موجود
-                        var existing = await ctx.Lecturers.FindAsync(_selectedLecturerId);
-                        if (existing != null)
-                        {
-                            existing.FirstName = _txtFirstName.Text.Trim();
-                            existing.LastName = _txtLastName.Text.Trim();
-                            existing.AcademicRank = _txtAcademicRank.Text.Trim();
-                            existing.MaxWorkload = maxWorkload;
-                            existing.IsActive = _chkIsActive.Checked;
-                            ctx.Entry(existing).State = EntityState.Modified;
-                        }
-                    }
-                    await ctx.SaveChangesAsync();
                 }
-                await LoadDataAsync();
-                ClearForm();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error saving data: " + ex.ToString(), "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
 
-        // دالة الحذف غير المتزامنة
-        private async void BtnDelete_Click(object sender, EventArgs e)
-        {
-            await BtnDelete_ClickAsync();
-        }
+                _availabilityListBox.DataSource = availabilityItems;
+                _availabilityListBox.DisplayMember = "DisplayName";
 
-        private async Task BtnDelete_ClickAsync()
-        {
-            if (_selectedLecturerId == 0) return;
+                // 3. Load Course ListBox Data (Courses and Teaching Types)
+                var courses = await _context.Courses.ToListAsync();
+                var courseItems = new List<CourseItem>();
 
-            if (MessageBox.Show("Are you sure you want to delete this lecturer?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
-                return;
-
-            try
-            {
-                using (var ctx = new SchedualAppModel())
+                foreach (var course in courses)
                 {
-                    var toDelete = await ctx.Lecturers.FindAsync(_selectedLecturerId);
-                    if (toDelete != null)
+                    // 1. Always add "نظري" (Theoretical)
+                    courseItems.Add(new CourseItem
                     {
-                        ctx.Lecturers.Remove(toDelete);
-                        await ctx.SaveChangesAsync();
+                        CourseID = course.CourseID,
+                        TeachingType = "Lecture", // Correct value based on SQL DDL
+                        DisplayName = $"{course.Title} - نظري" // القيمة المعروضة
+                    });
+
+                    // 2. Add "عملي" (Practical) only if IsPractical is true
+                    if (course.IsPractical)
+                    {
+                        courseItems.Add(new CourseItem
+                        {
+                            CourseID = course.CourseID,
+                            TeachingType = "Practical", // Correct value based on SQL DDL
+                            DisplayName = $"{course.Title} - عملي" // القيمة المعروضة
+                        });
                     }
                 }
-                await LoadDataAsync();
-                ClearForm();
+
+                _courseListBox.DataSource = courseItems;
+                _courseListBox.DisplayMember = "DisplayName";
+
+                // Select the first lecturer if available
+                if (_lecturerGrid.Rows.Count > 0)
+                {
+                    _lecturerGrid.Rows[0].Selected = true;
+                    LecturerGrid_SelectionChanged(null, null);
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error deleting data: " + ex.ToString(), "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error loading initial data: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        // دالة اختيار الصف في DataGridView
-        private void DataGridView_SelectionChanged(object sender, EventArgs e)
+        private void LecturerGrid_SelectionChanged(object sender, EventArgs e)
         {
-            // فحص null check لمنع NullReferenceException
-            if (_dataGridView == null || _dataGridView.SelectedRows.Count == 0) return;
-
-            var lecturer = _dataGridView.SelectedRows[0].DataBoundItem as Lecturer;
-            if (lecturer != null)
+            if (_lecturerGrid.SelectedRows.Count > 0)
             {
-                _selectedLecturerId = lecturer.LecturerID;
-                PopulateForm(lecturer);
+                // Use reflection to get the LecturerID from the anonymous object
+                var selectedItem = _lecturerGrid.SelectedRows[0].DataBoundItem;
+
+                if (selectedItem == null) return;
+
+                // Get the LecturerID using reflection
+                PropertyInfo prop = selectedItem.GetType().GetProperty("LecturerID");
+                if (prop == null) return;
+
+                int lecturerId = (int)prop.GetValue(selectedItem, null);
+
+                // Find the actual Lecturer object from the local list
+                _currentLecturer = _lecturers.FirstOrDefault(l => l.LecturerID == lecturerId);
+
+                if (_currentLecturer != null)
+                {
+                    DisplayLecturerData();
+                    LoadSecondaryDataAsync(_currentLecturer.LecturerID);
+                }
             }
         }
 
-        // دالة ملء نموذج الإدخال
-        private void PopulateForm(Lecturer lecturer)
+        private void DisplayLecturerData()
         {
-            _txtFirstName.Text = lecturer.FirstName;
-            _txtLastName.Text = lecturer.LastName;
-            _txtAcademicRank.Text = lecturer.AcademicRank;
-            _txtMaxWorkload.Text = lecturer.MaxWorkload.ToString();
-            _chkIsActive.Checked = lecturer.IsActive;
+            if (_currentLecturer != null)
+            {
+                _txtFirstName.Text = _currentLecturer.FirstName;
+                _txtLastName.Text = _currentLecturer.LastName;
+                _txtAcademicRank.Text = _currentLecturer.AcademicRank;
+                _txtMaxWorkload.Text = _currentLecturer.MaxWorkload.ToString();
+                _chkIsActive.Checked = _currentLecturer.IsActive;
+
+                _btnDelete.Enabled = true;
+                _btnSave.Text = "تحديث المحاضر";
+            }
         }
 
-        // دالة زر "جديد"
+        private async Task LoadSecondaryDataAsync(int lecturerId)
+        {
+            // Use a new context to avoid the "second operation started on this context" error
+            using (var tempContext = new SchedualAppModel())
+            {
+                try
+                {
+                    // 1. Load Lecturer Availability
+                    var availabilities = await tempContext.LecturerAvailabilities
+                        .Where(la => la.LecturerID == lecturerId)
+                        .Include(la => la.TimeSlotDefinition)
+                        .ToListAsync();
+
+                    _availabilities = new BindingList<LecturerAvailability>(availabilities);
+
+                    _availabilityGrid.DataSource = _availabilities.Select(la => new
+                    {
+                        la.LecturerAvailabilityID,
+                        // FIX: Use la.DayOfWeek - 1 to get the correct C# DayOfWeek enum value for ArabicDayNames
+                        Day = ArabicDayNames.GetArabicDayName((DayOfWeek)(la.DayOfWeek - 1)),
+                        TimeSlot = $"{la.TimeSlotDefinition.StartTime.ToString(@"hh\:mm")} - {la.TimeSlotDefinition.EndTime.ToString(@"hh\:mm")}"
+                    }).ToList();
+                    _availabilityGrid.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
+
+                    // Check the corresponding items in the Availability CheckedListBox
+                    for (int i = 0; i < _availabilityListBox.Items.Count; i++)
+                    {
+                        var item = _availabilityListBox.Items[i] as AvailabilityItem;
+                        bool isChecked = availabilities.Any(la =>
+                            // FIX: Use la.DayOfWeek - 1 for comparison with C# DayOfWeek enum
+                            (DayOfWeek)(la.DayOfWeek - 1) == item.DayOfWeek &&
+                            la.TimeSlotDefinitionID == item.TimeSlotDefinitionID);
+                        _availabilityListBox.SetItemChecked(i, isChecked);
+                    }
+
+                    // 2. Load Course Lecturer
+                    var courseLecturers = await tempContext.CourseLecturers
+                        .Where(cl => cl.LecturerID == lecturerId)
+                        .Include(cl => cl.Cours)
+                        .ToListAsync();
+
+                    _courseLecturers = new BindingList<CourseLecturer>(courseLecturers);
+
+                    _courseLecturerGrid.DataSource = _courseLecturers.Select(cl => new
+                    {
+                        cl.CourseLecturerID,
+                        Course = cl.Cours.Title, // Display Name
+                        cl.TeachingType
+                    }).ToList();
+                    _courseLecturerGrid.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
+
+                    // Check the corresponding items in the Course CheckedListBox
+                    for (int i = 0; i < _courseListBox.Items.Count; i++)
+                    {
+                        var item = _courseListBox.Items[i] as CourseItem;
+                        bool isChecked = courseLecturers.Any(cl =>
+                            cl.CourseID == item.CourseID &&
+                            // Use robust comparison for case sensitivity
+                            string.Equals(cl.TeachingType, item.TeachingType, StringComparison.OrdinalIgnoreCase));
+                        _courseListBox.SetItemChecked(i, isChecked);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error loading secondary data: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
         private void BtnNew_Click(object sender, EventArgs e)
         {
             ClearForm();
         }
 
-        // دالة مسح نموذج الإدخال
-        private void ClearForm()
+        private async void BtnSave_Click(object sender, EventArgs e)
         {
-            _selectedLecturerId = 0;
-            _txtFirstName.Text = string.Empty;
-            _txtLastName.Text = string.Empty;
-            _txtAcademicRank.Text = string.Empty;
-            _txtMaxWorkload.Text = "12"; // القيمة الافتراضية
-            _chkIsActive.Checked = true; // القيمة الافتراضية
+            if (!ValidateLecturerData()) return;
 
-            // فحص null check لمنع NullReferenceException
-            if (_dataGridView != null)
+            try
             {
-                _dataGridView.ClearSelection();
+                // 1. Save/Update Lecturer Data
+                bool isNewLecturer = false;
+                if (_currentLecturer == null)
+                {
+                    // New Lecturer
+                    _currentLecturer = new Lecturer();
+                    // Set properties immediately for validation
+                    _currentLecturer.FirstName = _txtFirstName.Text;
+                    _currentLecturer.LastName = _txtLastName.Text;
+                    _currentLecturer.AcademicRank = _txtAcademicRank.Text;
+                    _currentLecturer.MaxWorkload = int.Parse(_txtMaxWorkload.Text);
+                    _currentLecturer.IsActive = _chkIsActive.Checked;
+
+                    _context.Lecturers.Add(_currentLecturer);
+                    _lecturers.Add(_currentLecturer);
+                    isNewLecturer = true;
+                }
+
+                // Update properties for existing lecturer (or re-update for new lecturer)
+                _currentLecturer.FirstName = _txtFirstName.Text;
+                _currentLecturer.LastName = _txtLastName.Text;
+                _currentLecturer.AcademicRank = _txtAcademicRank.Text;
+                _currentLecturer.MaxWorkload = int.Parse(_txtMaxWorkload.Text);
+                _currentLecturer.IsActive = _chkIsActive.Checked;
+
+                // Save changes to get the LecturerID for new lecturers
+                await _context.SaveChangesAsync();
+
+                // 2. Handle Lecturer Availability (Batch Update)
+                // Get current saved availabilities
+                var existingAvailabilities = await _context.LecturerAvailabilities
+                    .Where(la => la.LecturerID == _currentLecturer.LecturerID)
+                    .ToListAsync();
+
+                // Get selected availabilities from the CheckedListBox
+                var selectedAvailabilityItems = _availabilityListBox.CheckedItems.Cast<AvailabilityItem>().ToList();
+
+                // Items to Add
+                var toAddAvailabilities = selectedAvailabilityItems
+                    .Where(selected => !existingAvailabilities.Any(existing =>
+                        // FIX: Use la.DayOfWeek - 1 for comparison with C# DayOfWeek enum
+                        (DayOfWeek)(existing.DayOfWeek - 1) == selected.DayOfWeek &&
+                        existing.TimeSlotDefinitionID == selected.TimeSlotDefinitionID))
+                    .Select(selected => new LecturerAvailability
+                    {
+                        LecturerID = _currentLecturer.LecturerID,
+                        // FIX: Add +1 to C# DayOfWeek enum value for SQL Server 1-indexed DayOfWeek
+                        DayOfWeek = (int)selected.DayOfWeek + 1,
+                        TimeSlotDefinitionID = selected.TimeSlotDefinitionID
+                    }).ToList();
+
+                // Items to Remove
+                var toRemoveAvailabilities = existingAvailabilities
+                    .Where(existing => !selectedAvailabilityItems.Any(selected =>
+                        // FIX: Use la.DayOfWeek - 1 for comparison with C# DayOfWeek enum
+                        (DayOfWeek)(existing.DayOfWeek - 1) == selected.DayOfWeek &&
+                        existing.TimeSlotDefinitionID == selected.TimeSlotDefinitionID))
+                    .ToList();
+
+                _context.LecturerAvailabilities.AddRange(toAddAvailabilities);
+                // Explicitly mark for deletion to avoid foreign key issues
+                foreach (var item in toRemoveAvailabilities)
+                {
+                    _context.Entry(item).State = EntityState.Deleted;
+                }
+
+
+                // 3. Handle Course Lecturer (Batch Update)
+                // Get current saved course assignments
+                var existingCourseLecturers = await _context.CourseLecturers
+                    .Where(cl => cl.LecturerID == _currentLecturer.LecturerID)
+                    .ToListAsync();
+
+                // Get selected course assignments from the CheckedListBox
+                var selectedCourseItems = _courseListBox.CheckedItems.Cast<CourseItem>().ToList();
+
+                // Items to Add
+                var toAddCourseLecturers = selectedCourseItems
+                    .Where(selected => !existingCourseLecturers.Any(existing =>
+                        existing.CourseID == selected.CourseID &&
+                        // Use robust comparison for case sensitivity
+                        string.Equals(existing.TeachingType, selected.TeachingType, StringComparison.OrdinalIgnoreCase)))
+                    .Select(selected => new CourseLecturer
+                    {
+                        LecturerID = _currentLecturer.LecturerID,
+                        CourseID = selected.CourseID,
+                        TeachingType = selected.TeachingType // Will be "Lecture" or "Practical"
+                    }).ToList();
+
+                // Items to Remove
+                var toRemoveCourseLecturers = existingCourseLecturers
+                    .Where(existing => !selectedCourseItems.Any(selected =>
+                        existing.CourseID == selected.CourseID &&
+                        // Use robust comparison for case sensitivity
+                        string.Equals(existing.TeachingType, selected.TeachingType, StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+
+                _context.CourseLecturers.AddRange(toAddCourseLecturers);
+                // Explicitly mark for deletion to avoid foreign key issues
+                foreach (var item in toRemoveCourseLecturers)
+                {
+                    _context.Entry(item).State = EntityState.Deleted;
+                }
+
+                // 4. Final Save (Transactional)
+                await _context.SaveChangesAsync();
+
+                // 5. Update UI
+                MessageBox.Show("تم حفظ بيانات المحاضر والأوقات والمقررات بنجاح.", "نجاح", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // Reload secondary data to update the grids and the CheckedListBoxes state
+                await LoadSecondaryDataAsync(_currentLecturer.LecturerID);
+
+                // Rebind the grid to update the anonymous object list (in case of new lecturer)
+                _lecturerGrid.DataSource = _lecturers.Select(l => new
+                {
+                    l.LecturerID,
+                    FullName = $"{l.FirstName} {l.LastName}",
+                    l.AcademicRank,
+                    l.MaxWorkload,
+                    l.IsActive
+                }).ToList();
+                _lecturerGrid.Refresh();
+                DisplayLecturerData(); // Update form buttons
+            }
+            catch (DbEntityValidationException ex)
+            {
+                var errorMessages = ex.EntityValidationErrors
+                    .SelectMany(x => x.ValidationErrors)
+                    .Select(x => x.PropertyName + ": " + x.ErrorMessage);
+
+                var fullErrorMessage = string.Join("\n", errorMessages);
+                var caption = "Database Validation Error";
+                MessageBox.Show($"Validation failed for the following entities:\n{fullErrorMessage}", caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (System.Data.Entity.Infrastructure.DbUpdateException ex)
+            {
+                // Handle database update errors (including CHECK constraint violations)
+                var innerException = ex.InnerException?.InnerException?.Message ?? ex.Message;
+                MessageBox.Show($"Error saving lecturer and related data: {innerException}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An unexpected error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        // دالة التحقق من صحة الإدخال
-        private bool ValidateForm(out int maxWorkload)
+        private bool ValidateLecturerData()
         {
-            maxWorkload = 0;
-
             if (string.IsNullOrWhiteSpace(_txtFirstName.Text) || string.IsNullOrWhiteSpace(_txtLastName.Text))
             {
-                MessageBox.Show("First Name and Last Name cannot be empty.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("يجب إدخال الاسم الأول واسم العائلة للمحاضر.", "خطأ في الإدخال", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
 
-            if (!int.TryParse(_txtMaxWorkload.Text, out maxWorkload) || maxWorkload <= 0)
+            if (!int.TryParse(_txtMaxWorkload.Text, out int workload) || workload <= 0)
             {
-                MessageBox.Show("Max Workload must be a positive number.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("يجب إدخال قيمة صحيحة وإيجابية للحد الأقصى لساعات العمل.", "خطأ في الإدخال", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
 
             return true;
+        }
+
+        private async void BtnDelete_Click(object sender, EventArgs e)
+        {
+            if (_currentLecturer == null) return;
+
+            var result = MessageBox.Show($"هل أنت متأكد من حذف المحاضر {_currentLecturer.FirstName} {_currentLecturer.LastName}؟ سيتم حذف جميع الأوقات والمقررات المرتبطة به.", "تأكيد الحذف", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+            if (result == DialogResult.Yes)
+            {
+                try
+                {
+                    // 1. Delete related entities to prevent foreign key constraint violations
+                    var availabilitiesToDelete = await _context.LecturerAvailabilities
+                        .Where(la => la.LecturerID == _currentLecturer.LecturerID)
+                        .ToListAsync();
+                    _context.LecturerAvailabilities.RemoveRange(availabilitiesToDelete);
+
+                    var courseLecturersToDelete = await _context.CourseLecturers
+                        .Where(cl => cl.LecturerID == _currentLecturer.LecturerID)
+                        .ToListAsync();
+                    _context.CourseLecturers.RemoveRange(courseLecturersToDelete);
+
+                    // 2. Delete the Lecturer
+                    _context.Lecturers.Remove(_currentLecturer);
+                    _lecturers.Remove(_currentLecturer);
+
+                    // 3. Save changes
+                    await _context.SaveChangesAsync();
+
+                    MessageBox.Show("تم حذف المحاضر بنجاح.", "نجاح", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    // FIX: Rebind the grid and select the first item to refresh the UI
+                    _lecturerGrid.DataSource = _lecturers.Select(l => new
+                    {
+                        l.LecturerID,
+                        FullName = $"{l.FirstName} {l.LastName}",
+                        l.AcademicRank,
+                        l.MaxWorkload,
+                        l.IsActive
+                    }).ToList();
+
+                    if (_lecturerGrid.Rows.Count > 0)
+                    {
+                        _lecturerGrid.Rows[0].Selected = true;
+                        LecturerGrid_SelectionChanged(null, null);
+                    }
+                    else
+                    {
+                        ClearForm(); // FIX: Clear form if no lecturers remain
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error deleting lecturer: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
     }
 }
