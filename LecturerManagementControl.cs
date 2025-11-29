@@ -41,108 +41,13 @@ namespace SchedualApp
         private void InitializeComponent()
         {
             this.SuspendLayout();
-
-            // TableLayoutPanel لتقسيم الواجهة 60% / 40%
-            _mainLayout = new TableLayoutPanel();
-            _mainLayout.Dock = DockStyle.Fill;
-            _mainLayout.ColumnCount = 2;
-            _mainLayout.RowCount = 1;
-            _mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60F)); // 60% للـ DataGridView
-            _mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40F)); // 40% للـ Form
-            _mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-
-            // DataGridView on left (Column 0)
-            _dataGridView = new DataGridView();
-            _dataGridView.Dock = DockStyle.Fill;
-            _dataGridView.ReadOnly = true;
-            _dataGridView.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            _dataGridView.MultiSelect = false;
-            _dataGridView.AllowUserToAddRows = false;
-            _dataGridView.AllowUserToDeleteRows = false;
-            _dataGridView.AutoGenerateColumns = false;
-            _dataGridView.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
-            _dataGridView.BackgroundColor = SystemColors.Window;
-            _dataGridView.SelectionChanged += DataGridView_SelectionChanged;
-
-            // Define columns for Lecturer
-            _dataGridView.Columns.AddRange(new DataGridViewColumn[] {
-                new DataGridViewTextBoxColumn { DataPropertyName = "LecturerID", HeaderText = "ID", ReadOnly = true, Width = 50 },
-                new DataGridViewTextBoxColumn { DataPropertyName = "FirstName", HeaderText = "First Name", ReadOnly = true, Width = 100 },
-                new DataGridViewTextBoxColumn { DataPropertyName = "LastName", HeaderText = "Last Name", ReadOnly = true, AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill },
-                new DataGridViewTextBoxColumn { DataPropertyName = "AcademicRank", HeaderText = "Rank", ReadOnly = true, Width = 80 },
-                new DataGridViewTextBoxColumn { DataPropertyName = "MaxWorkload", HeaderText = "Max Load", ReadOnly = true, Width = 60 },
-                new DataGridViewCheckBoxColumn { DataPropertyName = "IsActive", HeaderText = "Active", ReadOnly = true, Width = 50 }
-            });
-
-            _mainLayout.Controls.Add(_dataGridView, 0, 0); // إضافة الـ DataGridView إلى العمود الأول
-
-            // Right panel - form (Column 1)
-            _formPanel = new Panel();
-            _formPanel.Dock = DockStyle.Fill;
-            _formPanel.BackColor = SystemColors.Control;
-
-            var table = new TableLayoutPanel();
-            table.Dock = DockStyle.Fill;
-            table.ColumnCount = 2;
-            table.RowCount = 8; // 5 حقول إدخال + 1 مربع اختيار + صف للأزرار + صف مرن
-            table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 35F));
-            table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 65F));
-            for (int i = 0; i < 6; i++) table.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
-            table.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F)); // Buttons
-            table.RowStyles.Add(new RowStyle(SizeType.Percent, 100F)); // الصف الأخير مرن
-            table.Padding = new Padding(10);
-
-            // Row 0: First Name
-            table.Controls.Add(new Label { Text = "First Name:", TextAlign = ContentAlignment.MiddleLeft, Dock = DockStyle.Fill }, 0, 0);
-            _txtFirstName = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9F) };
-            table.Controls.Add(_txtFirstName, 1, 0);
-
-            // Row 1: Last Name
-            table.Controls.Add(new Label { Text = "Last Name:", TextAlign = ContentAlignment.MiddleLeft, Dock = DockStyle.Fill }, 0, 1);
-            _txtLastName = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9F) };
-            table.Controls.Add(_txtLastName, 1, 1);
-
-            // Row 2: Academic Rank
-            table.Controls.Add(new Label { Text = "Academic Rank:", TextAlign = ContentAlignment.MiddleLeft, Dock = DockStyle.Fill }, 0, 2);
-            _txtAcademicRank = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9F) };
-            table.Controls.Add(_txtAcademicRank, 1, 2);
-
-            // Row 3: Max Workload
-            table.Controls.Add(new Label { Text = "Max Workload:", TextAlign = ContentAlignment.MiddleLeft, Dock = DockStyle.Fill }, 0, 3);
-            _txtMaxWorkload = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9F) };
-            table.Controls.Add(_txtMaxWorkload, 1, 3);
-
-            // Row 4: Is Active
-            table.Controls.Add(new Label { Text = "Is Active:", TextAlign = ContentAlignment.MiddleLeft, Dock = DockStyle.Fill }, 0, 4);
-            _chkIsActive = new CheckBox { Dock = DockStyle.Fill, Text = "Lecturer is currently active", AutoSize = true };
-            table.Controls.Add(_chkIsActive, 1, 4);
-
-            var buttonsPanel = new FlowLayoutPanel();
-            buttonsPanel.FlowDirection = FlowDirection.RightToLeft;
-            buttonsPanel.Dock = DockStyle.Fill;
-
-            _btnNew = new Button { Text = "New", BackColor = Color.LightBlue, Width = 90, Height = 30 };
-            _btnSave = new Button { Text = "Save", BackColor = Color.Green, ForeColor = Color.White, Width = 90, Height = 30 };
-            _btnDelete = new Button { Text = "Delete", BackColor = Color.Red, ForeColor = Color.White, Width = 90, Height = 30 };
-
-            _btnNew.Click += BtnNew_Click;
-            _btnSave.Click += async (s, e) => await BtnSave_ClickAsync();
-            _btnDelete.Click += async (s, e) => await BtnDelete_ClickAsync();
-
-            buttonsPanel.Controls.Add(_btnDelete);
-            buttonsPanel.Controls.Add(_btnSave);
-            buttonsPanel.Controls.Add(_btnNew);
-
-            // Row 6: Buttons
-            table.Controls.Add(buttonsPanel, 0, 6);
-            table.SetColumnSpan(buttonsPanel, 2);
-
-            _formPanel.Controls.Add(table);
-            _mainLayout.Controls.Add(_formPanel, 1, 0); // إضافة الـ Form Panel إلى العمود الثاني
-
-            this.Controls.Add(_mainLayout); // إضافة الـ TableLayoutPanel إلى الكنترول الرئيسي
-
+            // 
+            // LecturerManagementControl
+            // 
+            this.Name = "LecturerManagementControl";
+            this.Load += new System.EventHandler(this.LecturerManagementControl_Load_1);
             this.ResumeLayout(false);
+
         }
 
         // دالة تحميل البيانات غير المتزامنة
@@ -296,6 +201,11 @@ namespace SchedualApp
             }
 
             return true;
+        }
+
+        private void LecturerManagementControl_Load_1(object sender, EventArgs e)
+        {
+
         }
     }
 }

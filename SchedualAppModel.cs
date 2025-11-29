@@ -23,6 +23,7 @@ namespace SchedualApp
         public virtual DbSet<RoomFeature> RoomFeatures { get; set; }
         public virtual DbSet<Room> Rooms { get; set; }
         public virtual DbSet<ScheduleSlot> ScheduleSlots { get; set; }
+        //public DbSet<TimeSlot> TimeSlots { get; set; }
         public virtual DbSet<TimeSlotDefinition> TimeSlotDefinitions { get; set; }
         public virtual DbSet<Timetable> Timetables { get; set; }
 

@@ -116,10 +116,22 @@
     <Compile Include="Cours.cs" />
     <Compile Include="CourseLecturer.cs" />
     <Compile Include="CourseLevel.cs" />
+    <Compile Include="CourseLevelManagementControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="CourseLevelManagementControl.Designer.cs">
+      <DependentUpon>CourseLevelManagementControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="CoursManagementControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Department.cs" />
+    <Compile Include="DepartmentManagementControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="DepartmentManagementControl.Designer.cs">
+      <DependentUpon>DepartmentManagementControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Feature.cs" />
     <Compile Include="GeneticAlgorithm\DataManager.cs" />
     <Compile Include="GeneticAlgorithm\ScheduleSlot.cs" />
@@ -140,15 +152,48 @@
     <Compile Include="Program.cs" />
     <Compile Include="Room.cs" />
     <Compile Include="RoomFeature.cs" />
+    <Compile Include="RoomManagementControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="RoomManagementControl.Designer.cs">
+      <DependentUpon>RoomManagementControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="SchedualAppModel.cs" />
     <Compile Include="SchedualAppModel.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>SchedualAppModel.edmx</DependentUpon>
     </Compile>
+    <Compile Include="SchedualDBDataSet.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>SchedualDBDataSet.xsd</DependentUpon>
+    </Compile>
+    <Compile Include="SchedualDBDataSet1.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>SchedualDBDataSet1.xsd</DependentUpon>
+    </Compile>
+    <Compile Include="SchedualDBDataSet2.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>SchedualDBDataSet2.xsd</DependentUpon>
+    </Compile>
     <Compile Include="ScheduleSlot.cs" />
     <Compile Include="TimeSlotDefinition.cs" />
+    <Compile Include="TimeSlotDefinitionControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="TimeSlotDefinitionControl.Designer.cs">
+      <DependentUpon>TimeSlotDefinitionControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Timetable.cs" />
+    <Compile Include="TimetableGenerationControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="TimetableGenerationControl.Designer.cs">
+      <DependentUpon>TimetableGenerationControl.cs</DependentUpon>
+    </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -176,6 +221,12 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <EmbeddedResource Include="CourseLevelManagementControl.resx">
+      <DependentUpon>CourseLevelManagementControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DepartmentManagementControl.resx">
+      <DependentUpon>DepartmentManagementControl.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="LecturerManagementControl.resx">
       <DependentUpon>LecturerManagementControl.cs</DependentUpon>
     </EmbeddedResource>
@@ -185,6 +236,15 @@
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RoomManagementControl.resx">
+      <DependentUpon>RoomManagementControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TimeSlotDefinitionControl.resx">
+      <DependentUpon>TimeSlotDefinitionControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TimetableGenerationControl.resx">
+      <DependentUpon>TimetableGenerationControl.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
@@ -197,6 +257,39 @@
     </EntityDeploy>
     <None Include="SchedualAppModel.edmx.diagram">
       <DependentUpon>SchedualAppModel.edmx</DependentUpon>
+    </None>
+    <None Include="SchedualDBDataSet.xsc">
+      <DependentUpon>SchedualDBDataSet.xsd</DependentUpon>
+    </None>
+    <None Include="SchedualDBDataSet.xsd">
+      <Generator>MSDataSetGenerator</Generator>
+      <LastGenOutput>SchedualDBDataSet.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="SchedualDBDataSet.xss">
+      <DependentUpon>SchedualDBDataSet.xsd</DependentUpon>
+    </None>
+    <None Include="SchedualDBDataSet1.xsc">
+      <DependentUpon>SchedualDBDataSet1.xsd</DependentUpon>
+    </None>
+    <None Include="SchedualDBDataSet1.xsd">
+      <Generator>MSDataSetGenerator</Generator>
+      <LastGenOutput>SchedualDBDataSet1.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="SchedualDBDataSet1.xss">
+      <DependentUpon>SchedualDBDataSet1.xsd</DependentUpon>
+    </None>
+    <None Include="SchedualDBDataSet2.xsc">
+      <DependentUpon>SchedualDBDataSet2.xsd</DependentUpon>
+    </None>
+    <None Include="SchedualDBDataSet2.xsd">
+      <Generator>MSDataSetGenerator</Generator>
+      <LastGenOutput>SchedualDBDataSet2.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="SchedualDBDataSet2.xss">
+      <DependentUpon>SchedualDBDataSet2.xsd</DependentUpon>
     </None>
   </ItemGroup>
   <ItemGroup>
