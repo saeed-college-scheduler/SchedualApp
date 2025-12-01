@@ -1,57 +1,91 @@
-using GeneticSharp.Domain.Chromosomes;
-using GeneticSharp.Domain.Randomizations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GeneticSharp.Domain.Chromosomes;
+using GeneticSharp.Domain.Randomizations;
+using SchedualApp.GeneticAlgorithm; // تمت الإضافة
 
 namespace SchedualApp.GeneticAlgorithm
 {
     public class TimetableChromosome : ChromosomeBase
     {
         private readonly DataManager _dataManager;
-        public List<ScheduleSlot> GenesList { get; private set; }
+        public List<RequiredSlot> RequiredSlots { get; private set; }
+        // تم تغيير نوع GenesList إلى IList<Gene> ليتوافق مع متطلبات GeneticSharp
+        public IList<Gene> GenesList { get; private set; }
 
         public TimetableChromosome(DataManager dataManager) : base(dataManager.RequiredSlots.Count)
         {
             _dataManager = dataManager;
-            GenesList = new List<ScheduleSlot>();
+            RequiredSlots = dataManager.RequiredSlots;
+            GenesList = new List<Gene>();
             CreateGenes();
         }
 
-        // يستخدم لعملية التزاوج (Crossover)
-        private TimetableChromosome(DataManager dataManager, List<ScheduleSlot> genesList) : base(genesList.Count)
+        // منشئ النسخ
+        public TimetableChromosome(DataManager dataManager, IList<Gene> genes) : base(genes.Count)
         {
             _dataManager = dataManager;
-            GenesList = genesList;
-            ReplaceGenes(0, genesList.Select(s => new Gene(s)).ToArray());
+            RequiredSlots = dataManager.RequiredSlots;
+            GenesList = new List<Gene>();
+            ReplaceGenes(genes);
         }
 
+        protected override void CreateGenes()
+        {
+            var random = RandomizationProvider.Current;
+            GenesList.Clear();
+
+            for (int i = 0; i < Length; i++)
+            {
+                var requiredSlot = RequiredSlots[i];
+
+                // 1. اختيار يوم عشوائي (السبت = 6، الأحد = 0، ...، الخميس = 4). الجمعة (5) مستبعد.
+                // أيام الأسبوع في C# تبدأ من الأحد (0)
+                // نحن نريد السبت (6) إلى الخميس (4)
+                // الأيام المتاحة: 0, 1, 2, 3, 4, 6
+                int[] availableDays = { 6, 0, 1, 2, 3, 4 }; // السبت، الأحد، الإثنين، الثلاثاء، الأربعاء، الخميس
+                int dayIndex = random.GetInt(0, availableDays.Length);
+                requiredSlot.DayOfWeek = availableDays[dayIndex];
+
+                // 2. اختيار فترة زمنية عشوائية
+                var timeSlots = _dataManager.TimeSlotDefinitions;
+                int timeSlotIndex = random.GetInt(0, timeSlots.Count);
+                requiredSlot.TimeSlotDefinitionID = timeSlots[timeSlotIndex].TimeSlotDefinitionID;
+
+                // 3. اختيار قاعة عشوائية
+                var rooms = _dataManager.Rooms;
+                int roomIndex = random.GetInt(0, rooms.Count);
+                requiredSlot.RoomID = rooms[roomIndex].RoomID;
+
+                // إضافة الجين (الـ RequiredSlot نفسه)
+                ReplaceGene(i, new Gene(requiredSlot));
+                GenesList.Add(new Gene(requiredSlot)); // إضافة الجين إلى القائمة الجديدة
+            }
+        }
+
+        // **إصلاح الخطأ CS0534**: يجب تطبيق هذه الدالة لتتوافق مع متطلبات ChromosomeBase
         public override Gene GenerateGene(int index)
         {
-            var requiredSlot = _dataManager.RequiredSlots[index];
-            var slot = new ScheduleSlot
-            {
-                RequiredSlotID = requiredSlot.RequiredSlotID,
-                CourseID = requiredSlot.CourseID,
-                LecturerID = requiredSlot.LecturerID,
-                SlotType = requiredSlot.SlotType
-            };
+            var random = RandomizationProvider.Current;
+            var requiredSlot = RequiredSlots[index];
 
-            // تعيين عشوائي للوقت والقاعة
-            var randomDay = RandomizationProvider.Current.GetInt(1, 6); // 1=الأحد إلى 5=الخميس (6 لاستبعاد الجمعة والسبت)
+            // 1. اختيار يوم عشوائي
+            int[] availableDays = { 6, 0, 1, 2, 3, 4 };
+            int dayIndex = random.GetInt(0, availableDays.Length);
+            requiredSlot.DayOfWeek = availableDays[dayIndex];
 
-            var timeSlotIds = _dataManager.TimeSlotDefinitions.Select(t => t.TimeSlotDefinitionID).ToList();
-            var randomTimeSlot = timeSlotIds[RandomizationProvider.Current.GetInt(0, timeSlotIds.Count)];
+            // 2. اختيار فترة زمنية عشوائية
+            var timeSlots = _dataManager.TimeSlotDefinitions;
+            int timeSlotIndex = random.GetInt(0, timeSlots.Count);
+            requiredSlot.TimeSlotDefinitionID = timeSlots[timeSlotIndex].TimeSlotDefinitionID;
 
-            var roomIds = _dataManager.Rooms.Select(r => r.RoomID).ToList();
-            var randomRoom = roomIds[RandomizationProvider.Current.GetInt(0, roomIds.Count)];
+            // 3. اختيار قاعة عشوائية
+            var rooms = _dataManager.Rooms;
+            int roomIndex = random.GetInt(0, rooms.Count);
+            requiredSlot.RoomID = rooms[roomIndex].RoomID;
 
-            slot.DayOfWeek = randomDay;
-            slot.TimeSlotDefinitionID = randomTimeSlot;
-            slot.RoomID = randomRoom;
-
-            GenesList.Add(slot);
-            return new Gene(slot);
+            return new Gene(requiredSlot);
         }
 
         public override IChromosome CreateNew()
@@ -61,15 +95,18 @@ namespace SchedualApp.GeneticAlgorithm
 
         public override IChromosome Clone()
         {
-            var clonedGenes = GetGenes().Select(g => ((ScheduleSlot)g.Value).Clone()).ToList();
-            return new TimetableChromosome(_dataManager, clonedGenes);
+            return new TimetableChromosome(_dataManager, GetGenes());
         }
 
-        // تم إضافة override لتصحيح خطأ CS0506
-        protected  void ReplaceGenes(int startIndex, Gene[] genes)
+        // لتسهيل الوصول إلى الجينات كـ RequiredSlot بعد التعديل
+        public void ReplaceGenes(IList<Gene> genes)
         {
-            base.ReplaceGenes(startIndex, genes);
-            GenesList = genes.Select(g => (ScheduleSlot)g.Value).ToList();
+            GenesList.Clear();
+            for (int i = 0; i < genes.Count; i++)
+            {
+                ReplaceGene(i, genes[i]);
+                GenesList.Add(genes[i]);
+            }
         }
     }
 }

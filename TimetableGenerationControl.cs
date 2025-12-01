@@ -1,5 +1,6 @@
 ﻿using DocumentFormat.OpenXml.Drawing;
 using GeneticSharp.Domain;
+using GeneticSharp.Domain.Chromosomes;
 using GeneticSharp.Domain.Crossovers;
 using GeneticSharp.Domain.Mutations;
 using GeneticSharp.Domain.Populations;
@@ -150,29 +151,6 @@ namespace SchedualApp
 
         private async Task SaveTimetableAsync(TimetableChromosome timetable, string name, int departmentId, int levelId)
         {
-            // Implementation needed: Save Timetable and its ScheduleSlots to DB
-            // This action CONSUMES the resources (Lecturers/Rooms) globally.
-
-            // مثال على الحفظ (يجب استبداله بمنطق Entity Framework الفعلي)
-
-            //var newTimetable = new Timetable
-            //{
-            //    TimetableName = name,
-            //    DepartmentID = departmentId,
-            //    LevelID = levelId,
-            //    Semester="السادس",
-            //    CreationDate = DateTime.Now,
-            //    IsApproved = true,
-            //    ScheduleSlots = timetable.GenesList.Select(s => new ScheduleSlot
-            //    {
-            //        CourseID = s.CourseID,
-            //        LecturerID = s.LecturerID,
-            //        DayOfWeek = s.DayOfWeek,
-            //        TimeSlotDefinitionID = s.TimeSlotDefinitionID,
-            //        RoomID = s.RoomID
-            //    }).ToList()
-            //};
-            // ... (داخل SaveTimetableAsync)
             var newTimetable = new Timetable
             {
                 TimetableName = name,
@@ -187,12 +165,12 @@ namespace SchedualApp
                 IsApproved = false,
                 ScheduleSlots = timetable.GenesList.Select(s => new ScheduleSlot
                 {
-                    CourseID = s.CourseID,
-                    LecturerID = s.LecturerID,
-                    DayOfWeek = s.DayOfWeek,
-                    TimeSlotDefinitionID = s.TimeSlotDefinitionID,
-                    RoomID = s.RoomID,
-                    SlotType = s.SlotType
+                    CourseID = ((RequiredSlot)s.Value).CourseID,
+                    LecturerID = ((RequiredSlot)s.Value).LecturerID,
+                    DayOfWeek = ((RequiredSlot)s.Value).DayOfWeek,
+                    TimeSlotDefinitionID = ((RequiredSlot)s.Value).TimeSlotDefinitionID,
+                    RoomID = ((RequiredSlot)s.Value).RoomID,
+                    SlotType = ((RequiredSlot)s.Value).SlotType
 
                     // إذا كان لديك خاصية SlotType مطلوبة في ScheduleSlot، يجب تعيينها هنا
                     // SlotType = "Lecture", // مثال
@@ -203,7 +181,7 @@ namespace SchedualApp
 
             _context.Timetables.Add(newTimetable);
             await _context.SaveChangesAsync();
-            
+
 
             await LoadArchivedTimetablesAsync();
             MessageBox.Show("تم حفظ الجدول بنجاح.", "نجاح", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -223,54 +201,11 @@ namespace SchedualApp
 
                     lblStatus.Text = $"تم حذف الجدول رقم {timetableId}. جاري تحديث القائمة...";
                     // مثال على الحذف (يجب استبداله بمنطق Entity Framework الفعلي)
-                    /*
-                    var timetableToDelete = await _context.Timetables.Include(t => t.ScheduleSlots).FirstOrDefaultAsync(t => t.TimetableID == timetableId);
-                    if (timetableToDelete != null)
-                    {
-                        _context.ScheduleSlots.RemoveRange(timetableToDelete.ScheduleSlots);
-                        _context.Timetables.Remove(timetableToDelete);
-                        await _context.SaveChangesAsync();
-                    }
-                    */
-
                     await LoadArchivedTimetablesAsync();
                     MessageBox.Show("تم حذف الجدول بنجاح.", "نجاح", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
         }
-
-        //private void DisplaySchedule(TimetableChromosome timetable)
-        //{
-        //    // تحويل الكروموسوم إلى DataTable للعرض في DataGridView
-        //    var dt = new DataTable();
-        //    dt.Columns.Add("اليوم");
-        //    dt.Columns.Add("الوقت");
-        //    dt.Columns.Add("المقرر");
-        //    dt.Columns.Add("المحاضر");
-        //    dt.Columns.Add("القاعة");
-
-        //    var sortedSlots = timetable.GenesList.OrderBy(s => s.DayOfWeek).ThenBy(s => s.TimeSlotDefinitionID);
-
-        //    foreach (var slot in sortedSlots)
-        //    {
-        //        var course = _dataManager.GetCourse(slot.CourseID);
-        //        var lecturer = _context.Lecturers.FirstOrDefault(l => l.LecturerID == slot.LecturerID);
-        //        var room = _dataManager.GetRoom(slot.RoomID);
-        //        var timeSlot = _dataManager.TimeSlotDefinitions.FirstOrDefault(ts => ts.TimeSlotDefinitionID == slot.TimeSlotDefinitionID);
-
-        //        dt.Rows.Add(
-        //            ((DayOfWeek)(slot.DayOfWeek - 1)).ToString(),
-        //            timeSlot?.StartTime.ToString(@"hh\:mm") + " - " + timeSlot?.EndTime.ToString(@"hh\:mm"),
-        //            course?.Title,
-        //            $"{lecturer?.FirstName} {lecturer?.LastName}",
-        //            room?.Name
-        //        );
-        //    }
-
-        //    dgvTimetable.DataSource = dt;
-        //    dgvTimetable.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
-        //}
-
         private void DisplaySchedule(TimetableChromosome timetable)
         {
             // 1. الحصول على جميع الفترات الزمنية المتاحة (الأعمدة)
@@ -300,7 +235,7 @@ namespace SchedualApp
 
             // 4. تعبئة البيانات
             var slotsByDayAndTime = timetable.GenesList
-                .GroupBy(s => new { Day = s.DayOfWeek, TimeSlot = s.TimeSlotDefinitionID })
+                .GroupBy(s => new { Day = ((RequiredSlot)s.Value).DayOfWeek, TimeSlot = ((RequiredSlot)s.Value).TimeSlotDefinitionID })
                 .ToDictionary(g => g.Key, g => g.ToList());
 
             foreach (var day in customDayOrder)
@@ -330,11 +265,11 @@ namespace SchedualApp
                         var cellContent = new System.Text.StringBuilder();
                         foreach (var slotData in scheduleSlots)
                         {
-                            var course = _dataManager.GetCourse(slotData.CourseID);
-                            var lecturer = _context.Lecturers.FirstOrDefault(l => l.LecturerID == slotData.LecturerID);
-                            var room = _dataManager.GetRoom(slotData.RoomID);
+                            var course = _dataManager.GetCourse(((RequiredSlot)slotData.Value).CourseID);
+                            var lecturer = _context.Lecturers.FirstOrDefault(l => l.LecturerID == ((RequiredSlot)slotData.Value).LecturerID);
+                            var room = _dataManager.GetRoom(((RequiredSlot)slotData.Value).RoomID);
 
-                            cellContent.AppendLine($"{course?.Title} ({slotData.SlotType})");
+                            cellContent.AppendLine($"{course?.Title} ({((RequiredSlot)slotData.Value).SlotType})");
                             cellContent.AppendLine($"المحاضر: {lecturer?.FirstName} {lecturer?.LastName}");
                             cellContent.AppendLine($"القاعة: {room?.Name}");
                             cellContent.AppendLine("---");

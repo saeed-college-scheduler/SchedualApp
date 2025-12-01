@@ -93,12 +93,12 @@ namespace SchedualApp
         //    LoadWinFormsControl(new CourseLecturerManagementControl(), "CourseLecturer");
         //}
 
-        private void ViewerButton_Click(object sender, RoutedEventArgs e)
-        {
-            // سنقوم بتصميم TimetableViewerControl في المرحلة القادمة
-            MessageBox.Show("Timetable Viewer UI is not yet implemented.", "Coming Soon");
-            // LoadWinFormsControl(new TimetableViewerControl(), "Viewer");
-        }
+        //private void ViewerButton_Click(object sender, RoutedEventArgs e)
+        //{
+        //    // سنقوم بتصميم TimetableViewerControl في المرحلة القادمة
+        //    MessageBox.Show("Timetable Viewer UI is not yet implemented.", "Coming Soon");
+        //    // LoadWinFormsControl(new TimetableViewerControl(), "Viewer");
+        //}
 
         private void winFormsHost_ChildChanged(object sender, ChildChangedEventArgs e)
         {

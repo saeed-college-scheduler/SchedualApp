@@ -2,18 +2,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Data.Entity;
-// تأكد من أن هذا الـ namespace هو الذي يحتوي على كياناتك (Course, Timetable, Room, etc.)
-// مثال: using SchedualApp.Models; 
+using SchedualApp; // **تم التعديل**: من المحتمل أن تكون الكيانات في الـ namespace الرئيسي SchedualApp وليس SchedualApp.Models
 
 namespace SchedualApp.GeneticAlgorithm
 {
-    // يمثل فتحة زمنية مطلوبة للجدولة
+    // يمثل فتحة زمنية مطلوبة للجدولة (الجين)
     public class RequiredSlot
     {
         public int RequiredSlotID { get; set; }
         public int CourseID { get; set; }
         public int LecturerID { get; set; }
-        public string SlotType { get; set; } // "Lecture" أو "Practical" (مأخوذ من TeachingType)
+        public string SlotType { get; set; } // "Lecture" أو "Practical"
+        public int DepartmentID { get; set; } // لتعارض الدفعة
+        public int LevelID { get; set; } // لتعارض الدفعة
+        public int DayOfWeek { get; set; } // Assigned Day
+        public int TimeSlotDefinitionID { get; set; } // Assigned Time Slot
+        public int RoomID { get; set; } // Assigned Room
     }
 
     public class DataManager
@@ -25,7 +29,7 @@ namespace SchedualApp.GeneticAlgorithm
         public List<Cours> Courses { get; private set; }
         public List<Room> Rooms { get; private set; }
         public List<TimeSlotDefinition> TimeSlotDefinitions { get; private set; }
-        public List<LecturerAvailability> Availabilities { get; private set; }
+        public List<LecturerAvailability> LecturerAvailabilities { get; private set; } // تم التصحيح
 
         // الكيانات الجديدة للعلاقات
         public List<CourseLevel> CourseLevels { get; private set; }
@@ -36,7 +40,7 @@ namespace SchedualApp.GeneticAlgorithm
 
         // بيانات الجدولة العالمية (القائمة السوداء)
         public List<Timetable> ExistingTimetables { get; private set; }
-        public HashSet<(int dayOfWeek, int timeSlotId, int resourceId)> GlobalBlacklist { get; private set; } // (Day, Slot, Lecturer/Room ID)
+        public HashSet<(int dayOfWeek, int timeSlotId, int resourceId)> GlobalBlacklist { get; private set; }
 
         public DataManager(SchedualAppModel context)
         {
@@ -50,8 +54,8 @@ namespace SchedualApp.GeneticAlgorithm
             Lecturers = await _context.Lecturers.AsNoTracking().ToListAsync();
             Rooms = await _context.Rooms.AsNoTracking().ToListAsync();
             TimeSlotDefinitions = await _context.TimeSlotDefinitions.AsNoTracking().ToListAsync();
-            Availabilities = await _context.LecturerAvailabilities.AsNoTracking().ToListAsync();
-            Courses = await _context.Courses.AsNoTracking().ToListAsync(); // تحميل جميع المقررات
+            LecturerAvailabilities = await _context.LecturerAvailabilities.AsNoTracking().ToListAsync();
+            Courses = await _context.Courses.AsNoTracking().ToListAsync();
 
             // 2. تحديد المقررات المطلوبة باستخدام CourseLevel
             CourseLevels = await _context.CourseLevels
@@ -70,7 +74,7 @@ namespace SchedualApp.GeneticAlgorithm
             BuildGlobalBlacklist();
 
             // 5. توليد الفتحات المطلوبة للجدولة
-            GenerateRequiredSlots();
+            GenerateRequiredSlots(departmentId, levelId); // تم تمرير المعاملات
         }
 
         private void BuildGlobalBlacklist()
@@ -81,20 +85,17 @@ namespace SchedualApp.GeneticAlgorithm
             {
                 foreach (var slot in timetable.ScheduleSlots)
                 {
-                    // Blacklist Lecturer
                     GlobalBlacklist.Add((slot.DayOfWeek, slot.TimeSlotDefinitionID, slot.LecturerID));
-                    // Blacklist Room
                     GlobalBlacklist.Add((slot.DayOfWeek, slot.TimeSlotDefinitionID, slot.RoomID));
                 }
             }
         }
 
-        private void GenerateRequiredSlots()
+        private void GenerateRequiredSlots(int departmentId, int levelId) // تم إضافة المعاملات
         {
             RequiredSlots.Clear();
             int requiredSlotIdCounter = 1;
 
-            // نستخدم CourseLecturers لتحديد الحصص المطلوبة
             foreach (var cl in CourseLecturers)
             {
                 var course = GetCourse(cl.CourseID);
@@ -105,7 +106,9 @@ namespace SchedualApp.GeneticAlgorithm
                     RequiredSlotID = requiredSlotIdCounter++,
                     CourseID = cl.CourseID,
                     LecturerID = cl.LecturerID,
-                    SlotType = cl.TeachingType // استخدام TeachingType مباشرة
+                    SlotType = cl.TeachingType,
+                    DepartmentID = departmentId, // تم التصحيح
+                    LevelID = levelId // تم التصحيح
                 });
             }
         }
@@ -115,7 +118,7 @@ namespace SchedualApp.GeneticAlgorithm
         public Room GetRoom(int roomId) => Rooms.FirstOrDefault(r => r.RoomID == roomId);
         public bool IsLecturerAvailable(int lecturerId, int dayOfWeek, int timeSlotId)
         {
-            return Availabilities.Any(a => a.LecturerID == lecturerId && a.DayOfWeek == dayOfWeek && a.TimeSlotDefinitionID == timeSlotId);
+            return LecturerAvailabilities.Any(a => a.LecturerID == lecturerId && a.DayOfWeek == dayOfWeek && a.TimeSlotDefinitionID == timeSlotId);
         }
         public bool IsGloballyBlacklisted(int dayOfWeek, int timeSlotId, int resourceId)
         {
@@ -123,7 +126,6 @@ namespace SchedualApp.GeneticAlgorithm
         }
         public bool IsLecturerQualified(int lecturerId, int courseId, string slotType)
         {
-            // التحقق من أن المحاضر مسند للمقرر وله نفس نوع التدريس
             return CourseLecturers.Any(cl => cl.LecturerID == lecturerId && cl.CourseID == courseId && cl.TeachingType == slotType);
         }
     }
