@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.dataGridViewCourseLevels = new System.Windows.Forms.DataGridView();
             this.panelForm = new System.Windows.Forms.Panel();
@@ -40,9 +41,14 @@
             this.btnDelete = new System.Windows.Forms.Button();
             this.btnSave = new System.Windows.Forms.Button();
             this.btnNew = new System.Windows.Forms.Button();
+            this.schedualDBDataSet3 = new SchedualApp.SchedualDBDataSet3();
+            this.coursesBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.coursesTableAdapter = new SchedualApp.SchedualDBDataSet3TableAdapters.CoursesTableAdapter();
             this.tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewCourseLevels)).BeginInit();
             this.panelForm.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.schedualDBDataSet3)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.coursesBindingSource)).BeginInit();
             this.SuspendLayout();
             // 
             // tableLayoutPanel1
@@ -98,6 +104,7 @@
             // 
             // cmbCourse
             // 
+            this.cmbCourse.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.coursesBindingSource, "Title", true));
             this.cmbCourse.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbCourse.FormattingEnabled = true;
             this.cmbCourse.Location = new System.Drawing.Point(15, 196);
@@ -180,6 +187,20 @@
             this.btnNew.UseVisualStyleBackColor = true;
             this.btnNew.Click += new System.EventHandler(this.BtnNew_Click);
             // 
+            // schedualDBDataSet3
+            // 
+            this.schedualDBDataSet3.DataSetName = "SchedualDBDataSet3";
+            this.schedualDBDataSet3.SchemaSerializationMode = System.Data.SchemaSerializationMode.IncludeSchema;
+            // 
+            // coursesBindingSource
+            // 
+            this.coursesBindingSource.DataMember = "Courses";
+            this.coursesBindingSource.DataSource = this.schedualDBDataSet3;
+            // 
+            // coursesTableAdapter
+            // 
+            this.coursesTableAdapter.ClearBeforeFill = true;
+            // 
             // CourseLevelManagementControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -193,6 +214,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewCourseLevels)).EndInit();
             this.panelForm.ResumeLayout(false);
             this.panelForm.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.schedualDBDataSet3)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.coursesBindingSource)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -211,5 +234,8 @@
         private System.Windows.Forms.Label lblLevel;
         private System.Windows.Forms.ComboBox cmbDepartment;
         private System.Windows.Forms.Label lblDepartment;
+        private System.Windows.Forms.BindingSource coursesBindingSource;
+        private SchedualDBDataSet3 schedualDBDataSet3;
+        private SchedualDBDataSet3TableAdapters.CoursesTableAdapter coursesTableAdapter;
     }
 }

@@ -38,13 +38,12 @@ namespace SchedualApp
             {
                 switch (day)
                 {
+                    case DayOfWeek.Saturday: return "السبت";
                     case DayOfWeek.Sunday: return "الأحد";
                     case DayOfWeek.Monday: return "الإثنين";
                     case DayOfWeek.Tuesday: return "الثلاثاء";
                     case DayOfWeek.Wednesday: return "الأربعاء";
                     case DayOfWeek.Thursday: return "الخميس";
-                    case DayOfWeek.Friday: return "الجمعة";
-                    case DayOfWeek.Saturday: return "السبت";
                     default: return string.Empty;
                 }
             }
@@ -125,7 +124,7 @@ namespace SchedualApp
 
                 // 2. Load Availability ListBox Data (Days and Time Slots)
                 // Filter out Friday (5) and Saturday (6)
-                var days = Enum.GetValues(typeof(DayOfWeek)).Cast<DayOfWeek>().Where(d => d != DayOfWeek.Friday && d != DayOfWeek.Saturday);
+                var days = Enum.GetValues(typeof(DayOfWeek)).Cast<DayOfWeek>().Where(d => d != DayOfWeek.Friday).OrderBy(d => (d == DayOfWeek.Saturday) ? 0 : (int)d + 1); ;
                 var timeSlots = await _context.TimeSlotDefinitions.OrderBy(ts => ts.SlotNumber).ToListAsync();
                 var availabilityItems = new List<AvailabilityItem>();
 
@@ -527,6 +526,41 @@ namespace SchedualApp
                     MessageBox.Show($"Error deleting lecturer: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
+        }
+
+        private void _availabilityListBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void _availabilityGrid_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void _courseListBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void _dataGridsLayout_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void _mainLayout_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void _lecturerFormPanel_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void _btnDelete_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

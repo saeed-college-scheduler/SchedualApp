@@ -6,107 +6,70 @@ using System.Linq;
 
 namespace SchedualApp.GeneticAlgorithm
 {
-    /// <summary>
-    /// يمثل الكروموسوم (الجدول الزمني) ويرث من IChromosome.
-    /// </summary>
     public class TimetableChromosome : ChromosomeBase
     {
         private readonly DataManager _dataManager;
-        private readonly int _timetableId;
-        
-        // Genes: تمثل قائمة المحاضرات (ScheduleSlot) التي تشكل الجدول الزمني
-        public List<ScheduleSlot> Genes { get; set; }
+        public List<ScheduleSlot> GenesList { get; private set; }
 
-        /// <summary>
-        /// Constructor for creating a new chromosome.
-        /// </summary>
-        /// <param name="dataManager">مدير البيانات لتحميل الموارد.</param>
-        /// <param name="timetableId">معرف الجدول الزمني الذي يتم توليده.</param>
-        public TimetableChromosome(DataManager dataManager, int timetableId) : base(dataManager.RequiredSlots.Count)
+        public TimetableChromosome(DataManager dataManager) : base(dataManager.RequiredSlots.Count)
         {
             _dataManager = dataManager;
-            _timetableId = timetableId;
-            Genes = new List<ScheduleSlot>(dataManager.RequiredSlots.Count);
-            
-            // يجب أن يكون عدد الجينات مساوياً لعدد الفتحات المطلوبة
+            GenesList = new List<ScheduleSlot>();
             CreateGenes();
         }
 
-        /// <summary>
-        /// Constructor for cloning.
-        /// </summary>
-        private TimetableChromosome(DataManager dataManager, int timetableId, List<ScheduleSlot> genes) : base(dataManager.RequiredSlots.Count)
+        // يستخدم لعملية التزاوج (Crossover)
+        private TimetableChromosome(DataManager dataManager, List<ScheduleSlot> genesList) : base(genesList.Count)
         {
             _dataManager = dataManager;
-            _timetableId = timetableId;
-            Genes = genes.Select(s => s.Clone()).ToList(); // Deep copy of ScheduleSlots
-
-            // Replace internal genes array starting at 0
-            var geneArray = Genes.Select(g => new Gene(g)).ToArray();
-            ReplaceGenes(0, geneArray);
+            GenesList = genesList;
+            ReplaceGenes(0, genesList.Select(s => new Gene(s)).ToArray());
         }
 
-        /// <summary>
-        /// إنشاء الجينات (مطلوب من ChromosomeBase)
-        /// </summary>
-        public override Gene GenerateGene(int geneIndex)
+        public override Gene GenerateGene(int index)
         {
-            var requiredSlots = _dataManager.RequiredSlots;
-            var random = RandomizationProvider.Current;
-
-            var requiredSlot = requiredSlots[geneIndex];
-
-            // اختيار مورد عشوائي لكل فتحة مطلوبة
-            var randomLecturer = _dataManager.Lecturers.ElementAt(random.GetInt(0, Math.Max(1, _dataManager.Lecturers.Count)));
-            var randomRoom = _dataManager.Rooms.ElementAt(random.GetInt(0, Math.Max(1, _dataManager.Rooms.Count)));
-            var randomDay = random.GetInt(1, 7); // 1-6 inclusive? use 1..6 or 1..7; keep 1..6 originally used 1..6 (end-exclusive), adjust to 7
-            var randomTimeSlot = _dataManager.TimeSlotDefinitions.ElementAt(random.GetInt(0, Math.Max(1, _dataManager.TimeSlotDefinitions.Count)));
-
-            var newSlot = new ScheduleSlot
+            var requiredSlot = _dataManager.RequiredSlots[index];
+            var slot = new ScheduleSlot
             {
-                TimetableID = _timetableId,
+                RequiredSlotID = requiredSlot.RequiredSlotID,
                 CourseID = requiredSlot.CourseID,
-                LecturerID = randomLecturer.LecturerID,
-                RoomID = randomRoom.RoomID,
-                DayOfWeek = randomDay,
-                TimeSlotDefinitionID = randomTimeSlot.TimeSlotDefinitionID,
-                SlotType = requiredSlot.SlotType // Lecture or Practical
+                LecturerID = requiredSlot.LecturerID,
+                SlotType = requiredSlot.SlotType
             };
 
-            // Ensure Genes list mirrors the chromosome genes
-            if (Genes.Count > geneIndex)
-            {
-                Genes[geneIndex] = newSlot;
-            }
-            else
-            {
-                // pad with nulls if necessary
-                while (Genes.Count < geneIndex) Genes.Add(new ScheduleSlot());
-                Genes.Add(newSlot);
-            }
+            // تعيين عشوائي للوقت والقاعة
+            var randomDay = RandomizationProvider.Current.GetInt(1, 6); // 1=الأحد إلى 5=الخميس (6 لاستبعاد الجمعة والسبت)
 
-            return new Gene(newSlot);
+            var timeSlotIds = _dataManager.TimeSlotDefinitions.Select(t => t.TimeSlotDefinitionID).ToList();
+            var randomTimeSlot = timeSlotIds[RandomizationProvider.Current.GetInt(0, timeSlotIds.Count)];
+
+            var roomIds = _dataManager.Rooms.Select(r => r.RoomID).ToList();
+            var randomRoom = roomIds[RandomizationProvider.Current.GetInt(0, roomIds.Count)];
+
+            slot.DayOfWeek = randomDay;
+            slot.TimeSlotDefinitionID = randomTimeSlot;
+            slot.RoomID = randomRoom;
+
+            GenesList.Add(slot);
+            return new Gene(slot);
         }
 
-        /// <summary>
-        /// إنشاء نسخة جديدة من الكروموسوم (مطلوب من IChromosome)
-        /// </summary>
         public override IChromosome CreateNew()
         {
-            return new TimetableChromosome(_dataManager, _timetableId);
+            return new TimetableChromosome(_dataManager);
         }
 
-        /// <summary>
-        /// استنساخ الكروموسوم (مطلوب من IChromosome)
-        /// </summary>
         public override IChromosome Clone()
         {
-            // يجب أن يتم استنساخ الجينات أيضاً (Deep Clone)
-            var clonedGenes = Genes.Select(s => s.Clone()).ToList();
-            return new TimetableChromosome(_dataManager, _timetableId, clonedGenes);
+            var clonedGenes = GetGenes().Select(g => ((ScheduleSlot)g.Value).Clone()).ToList();
+            return new TimetableChromosome(_dataManager, clonedGenes);
         }
-        
-        // يجب أن يتم تطبيق منطق التزاوج والطفرة على هذا الكلاس
-        // لكن GeneticSharp يتعامل معها عبر كلاسات Crossover و Mutation منفصلة.
+
+        // تم إضافة override لتصحيح خطأ CS0506
+        protected  void ReplaceGenes(int startIndex, Gene[] genes)
+        {
+            base.ReplaceGenes(startIndex, genes);
+            GenesList = genes.Select(g => (ScheduleSlot)g.Value).ToList();
+        }
     }
 }

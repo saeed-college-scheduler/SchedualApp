@@ -15,6 +15,10 @@ namespace SchedualApp
         }
 
         public int TimetableID { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string TimetableName { get; set; }
+
 
         public int DepartmentID { get; set; }
 

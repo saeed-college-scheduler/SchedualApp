@@ -42,7 +42,7 @@ namespace SchedualApp
                 // Corrected based on error CS1061: The entity set is likely plural 'Courses' in the DbContext
                 var courses = await db.Courses.ToListAsync();
                 cmbCourse.DataSource = courses;
-                cmbCourse.DisplayMember = "Name";
+                cmbCourse.DisplayMember = "Title";
                 cmbCourse.ValueMember = "CourseID";
             }
             catch (Exception ex)

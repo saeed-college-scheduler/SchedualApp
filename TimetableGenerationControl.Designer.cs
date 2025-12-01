@@ -11,14 +11,14 @@
         /// Clean up any resources being used.
         /// </summary>
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-        //protected override void Dispose(bool disposing)
-        //{
-        //    if (disposing && (components != null))
-        //    {
-        //        components.Dispose();
-        //    }
-        //    base.Dispose(disposing);
-        //}
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
 
         #region Component Designer generated code
 
@@ -28,166 +28,242 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.panelControl = new System.Windows.Forms.Panel();
-            this.cmbLevel = new System.Windows.Forms.ComboBox();
-            this.label3 = new System.Windows.Forms.Label();
-            this.cmbDepartment = new System.Windows.Forms.ComboBox();
-            this.label2 = new System.Windows.Forms.Label();
-            this.txtResults = new System.Windows.Forms.TextBox();
+            this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            this.dgvTimetable = new System.Windows.Forms.DataGridView();
+            this.panelControls = new System.Windows.Forms.Panel();
+            this.btnDelete = new System.Windows.Forms.Button();
+            this.lstArchivedTimetables = new System.Windows.Forms.ListBox();
+            this.label5 = new System.Windows.Forms.Label();
             this.progressBar = new System.Windows.Forms.ProgressBar();
+            this.lblStatus = new System.Windows.Forms.Label();
             this.btnGenerate = new System.Windows.Forms.Button();
-            this.cmbSemester = new System.Windows.Forms.ComboBox();
+            this.txtTimetableName = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.Label();
+            this.cboLevel = new System.Windows.Forms.ComboBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.cboDepartment = new System.Windows.Forms.ComboBox();
+            this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
-            this.panelControl.SuspendLayout();
+            this.tableLayoutPanel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvTimetable)).BeginInit();
+            this.panelControls.SuspendLayout();
             this.SuspendLayout();
             // 
-            // panelControl
+            // tableLayoutPanel1
             // 
-            this.panelControl.Controls.Add(this.cmbLevel);
-            this.panelControl.Controls.Add(this.label3);
-            this.panelControl.Controls.Add(this.cmbDepartment);
-            this.panelControl.Controls.Add(this.label2);
-            this.panelControl.Controls.Add(this.txtResults);
-            this.panelControl.Controls.Add(this.progressBar);
-            this.panelControl.Controls.Add(this.btnGenerate);
-            this.panelControl.Controls.Add(this.cmbSemester);
-            this.panelControl.Controls.Add(this.label1);
-            this.panelControl.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelControl.Location = new System.Drawing.Point(0, 0);
-            this.panelControl.Name = "panelControl";
-            this.panelControl.Size = new System.Drawing.Size(800, 600);
-            this.panelControl.TabIndex = 0;
+            this.tableLayoutPanel1.ColumnCount = 2;
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 400F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel1.Controls.Add(this.dgvTimetable, 1, 0);
+            this.tableLayoutPanel1.Controls.Add(this.panelControls, 0, 0);
+            this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
+            this.tableLayoutPanel1.Margin = new System.Windows.Forms.Padding(4);
+            this.tableLayoutPanel1.Name = "tableLayoutPanel1";
+            this.tableLayoutPanel1.RowCount = 1;
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(1067, 738);
+            this.tableLayoutPanel1.TabIndex = 0;
             // 
-            // cmbLevel
+            // dgvTimetable
             // 
-            this.cmbLevel.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbLevel.FormattingEnabled = true;
-            this.cmbLevel.Items.AddRange(new object[] {
-            "مستوى اول",
-            "مستوى ثاني",
-            "مستوى ثالث",
-            "مستوى رابع",
-            "مستوى خامس"});
-            this.cmbLevel.Location = new System.Drawing.Point(400, 20);
-            this.cmbLevel.Name = "cmbLevel";
-            this.cmbLevel.Size = new System.Drawing.Size(150, 24);
-            this.cmbLevel.TabIndex = 8;
-            this.cmbLevel.SelectedIndexChanged += new System.EventHandler(this.cmbLevel_SelectedIndexChanged);
+            this.dgvTimetable.AllowUserToAddRows = false;
+            this.dgvTimetable.AllowUserToDeleteRows = false;
+            this.dgvTimetable.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvTimetable.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dgvTimetable.Location = new System.Drawing.Point(404, 4);
+            this.dgvTimetable.Margin = new System.Windows.Forms.Padding(4);
+            this.dgvTimetable.Name = "dgvTimetable";
+            this.dgvTimetable.ReadOnly = true;
+            this.dgvTimetable.RowHeadersWidth = 51;
+            this.dgvTimetable.Size = new System.Drawing.Size(659, 730);
+            this.dgvTimetable.TabIndex = 0;
+            this.dgvTimetable.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvTimetable_CellContentClick);
+            // 
+            // panelControls
+            // 
+            this.panelControls.Controls.Add(this.btnDelete);
+            this.panelControls.Controls.Add(this.lstArchivedTimetables);
+            this.panelControls.Controls.Add(this.label5);
+            this.panelControls.Controls.Add(this.progressBar);
+            this.panelControls.Controls.Add(this.lblStatus);
+            this.panelControls.Controls.Add(this.btnGenerate);
+            this.panelControls.Controls.Add(this.txtTimetableName);
+            this.panelControls.Controls.Add(this.label4);
+            this.panelControls.Controls.Add(this.cboLevel);
+            this.panelControls.Controls.Add(this.label3);
+            this.panelControls.Controls.Add(this.cboDepartment);
+            this.panelControls.Controls.Add(this.label2);
+            this.panelControls.Controls.Add(this.label1);
+            this.panelControls.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panelControls.Location = new System.Drawing.Point(4, 4);
+            this.panelControls.Margin = new System.Windows.Forms.Padding(4);
+            this.panelControls.Name = "panelControls";
+            this.panelControls.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.panelControls.Size = new System.Drawing.Size(392, 730);
+            this.panelControls.TabIndex = 1;
+            // 
+            // btnDelete
+            // 
+            this.btnDelete.Location = new System.Drawing.Point(12, 464);
+            this.btnDelete.Margin = new System.Windows.Forms.Padding(4);
+            this.btnDelete.Name = "btnDelete";
+            this.btnDelete.Size = new System.Drawing.Size(100, 28);
+            this.btnDelete.TabIndex = 12;
+            this.btnDelete.Text = "حذف الجدول";
+            this.btnDelete.UseVisualStyleBackColor = true;
+            this.btnDelete.Click += new System.EventHandler(this.BtnDelete_Click);
+            // 
+            // lstArchivedTimetables
+            // 
+            this.lstArchivedTimetables.FormattingEnabled = true;
+            this.lstArchivedTimetables.ItemHeight = 16;
+            this.lstArchivedTimetables.Location = new System.Drawing.Point(12, 254);
+            this.lstArchivedTimetables.Margin = new System.Windows.Forms.Padding(4);
+            this.lstArchivedTimetables.Name = "lstArchivedTimetables";
+            this.lstArchivedTimetables.Size = new System.Drawing.Size(367, 196);
+            this.lstArchivedTimetables.TabIndex = 11;
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label5.Location = new System.Drawing.Point(248, 230);
+            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(124, 20);
+            this.label5.TabIndex = 10;
+            this.label5.Text = "الجداول المحفوظة";
+            // 
+            // progressBar
+            // 
+            this.progressBar.Location = new System.Drawing.Point(12, 183);
+            this.progressBar.Margin = new System.Windows.Forms.Padding(4);
+            this.progressBar.Name = "progressBar";
+            this.progressBar.Size = new System.Drawing.Size(368, 12);
+            this.progressBar.TabIndex = 9;
+            // 
+            // lblStatus
+            // 
+            this.lblStatus.AutoSize = true;
+            this.lblStatus.Location = new System.Drawing.Point(12, 199);
+            this.lblStatus.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.lblStatus.Name = "lblStatus";
+            this.lblStatus.Size = new System.Drawing.Size(37, 16);
+            this.lblStatus.TabIndex = 8;
+            this.lblStatus.Text = "الحالة:";
+            // 
+            // btnGenerate
+            // 
+            this.btnGenerate.Location = new System.Drawing.Point(12, 148);
+            this.btnGenerate.Margin = new System.Windows.Forms.Padding(4);
+            this.btnGenerate.Name = "btnGenerate";
+            this.btnGenerate.Size = new System.Drawing.Size(368, 28);
+            this.btnGenerate.TabIndex = 7;
+            this.btnGenerate.Text = "إنشاء الجدول";
+            this.btnGenerate.UseVisualStyleBackColor = true;
+            this.btnGenerate.Click += new System.EventHandler(this.btnGenerate_Click);
+            // 
+            // txtTimetableName
+            // 
+            this.txtTimetableName.Location = new System.Drawing.Point(12, 116);
+            this.txtTimetableName.Margin = new System.Windows.Forms.Padding(4);
+            this.txtTimetableName.Name = "txtTimetableName";
+            this.txtTimetableName.Size = new System.Drawing.Size(265, 22);
+            this.txtTimetableName.TabIndex = 6;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(287, 119);
+            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(62, 16);
+            this.label4.TabIndex = 5;
+            this.label4.Text = "اسم الجدول:";
+            // 
+            // cboLevel
+            // 
+            this.cboLevel.FormattingEnabled = true;
+            this.cboLevel.Location = new System.Drawing.Point(12, 82);
+            this.cboLevel.Margin = new System.Windows.Forms.Padding(4);
+            this.cboLevel.Name = "cboLevel";
+            this.cboLevel.Size = new System.Drawing.Size(265, 24);
+            this.cboLevel.TabIndex = 4;
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(350, 23);
+            this.label3.Location = new System.Drawing.Point(287, 86);
+            this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(43, 16);
-            this.label3.TabIndex = 7;
-            this.label3.Text = "Level:";
+            this.label3.Size = new System.Drawing.Size(93, 16);
+            this.label3.TabIndex = 3;
+            this.label3.Text = "المستوى الدراسي:";
             // 
-            // cmbDepartment
+            // cboDepartment
             // 
-            this.cmbDepartment.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbDepartment.FormattingEnabled = true;
-            this.cmbDepartment.Items.AddRange(new object[] {
-            "IT",
-            "SE",
-            "CND",
-            "COM",
-            "IMSE",
-            "MRE",
-            "AIDS",
-            "RE"});
-            this.cmbDepartment.Location = new System.Drawing.Point(120, 50);
-            this.cmbDepartment.Name = "cmbDepartment";
-            this.cmbDepartment.Size = new System.Drawing.Size(150, 24);
-            this.cmbDepartment.TabIndex = 6;
+            this.cboDepartment.FormattingEnabled = true;
+            this.cboDepartment.Location = new System.Drawing.Point(12, 49);
+            this.cboDepartment.Margin = new System.Windows.Forms.Padding(4);
+            this.cboDepartment.Name = "cboDepartment";
+            this.cboDepartment.Size = new System.Drawing.Size(265, 24);
+            this.cboDepartment.TabIndex = 2;
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(20, 53);
+            this.label2.Location = new System.Drawing.Point(287, 53);
+            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(80, 16);
-            this.label2.TabIndex = 5;
-            this.label2.Text = "Department:";
-            // 
-            // txtResults
-            // 
-            this.txtResults.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtResults.Location = new System.Drawing.Point(20, 150);
-            this.txtResults.Multiline = true;
-            this.txtResults.Name = "txtResults";
-            this.txtResults.ReadOnly = true;
-            this.txtResults.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtResults.Size = new System.Drawing.Size(760, 430);
-            this.txtResults.TabIndex = 4;
-            this.txtResults.TextChanged += new System.EventHandler(this.txtResults_TextChanged);
-            // 
-            // progressBar
-            // 
-            this.progressBar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.progressBar.Location = new System.Drawing.Point(20, 110);
-            this.progressBar.Name = "progressBar";
-            this.progressBar.Size = new System.Drawing.Size(760, 25);
-            this.progressBar.TabIndex = 3;
-            // 
-            // btnGenerate
-            // 
-            this.btnGenerate.Location = new System.Drawing.Point(20, 80);
-            this.btnGenerate.Name = "btnGenerate";
-            this.btnGenerate.Size = new System.Drawing.Size(200, 35);
-            this.btnGenerate.TabIndex = 2;
-            this.btnGenerate.Text = "Generate Timetable";
-            this.btnGenerate.UseVisualStyleBackColor = true;
-            this.btnGenerate.Click += new System.EventHandler(this.BtnGenerate_Click);
-            // 
-            // cmbSemester
-            // 
-            this.cmbSemester.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbSemester.FormattingEnabled = true;
-            this.cmbSemester.Items.AddRange(new object[] {
-            "الاول",
-            "الثاني"});
-            this.cmbSemester.Location = new System.Drawing.Point(120, 20);
-            this.cmbSemester.Name = "cmbSemester";
-            this.cmbSemester.Size = new System.Drawing.Size(150, 24);
-            this.cmbSemester.TabIndex = 1;
+            this.label2.Size = new System.Drawing.Size(35, 16);
+            this.label2.TabIndex = 1;
+            this.label2.Text = "القسم:";
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(20, 23);
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Location = new System.Drawing.Point(260, 12);
+            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(68, 16);
+            this.label1.Size = new System.Drawing.Size(88, 20);
             this.label1.TabIndex = 0;
-            this.label1.Text = "Semester:";
+            this.label1.Text = "لوحة الإنشاء";
             // 
             // TimetableGenerationControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.panelControl);
+            this.Controls.Add(this.tableLayoutPanel1);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "TimetableGenerationControl";
-            this.Size = new System.Drawing.Size(800, 600);
-            this.panelControl.ResumeLayout(false);
-            this.panelControl.PerformLayout();
+            this.Size = new System.Drawing.Size(1067, 738);
+            this.tableLayoutPanel1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dgvTimetable)).EndInit();
+            this.panelControls.ResumeLayout(false);
+            this.panelControls.PerformLayout();
             this.ResumeLayout(false);
 
         }
 
         #endregion
 
-        private System.Windows.Forms.Panel panelControl;
-        private System.Windows.Forms.Button btnGenerate;
-        private System.Windows.Forms.ComboBox cmbSemester;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
+        private System.Windows.Forms.DataGridView dgvTimetable;
+        private System.Windows.Forms.Panel panelControls;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.ProgressBar progressBar;
-        private System.Windows.Forms.TextBox txtResults;
-        private System.Windows.Forms.ComboBox cmbLevel;
-        private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.ComboBox cmbDepartment;
+        private System.Windows.Forms.ComboBox cboDepartment;
         private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.ComboBox cboLevel;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.TextBox txtTimetableName;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Button btnGenerate;
+        private System.Windows.Forms.ProgressBar progressBar;
+        private System.Windows.Forms.Label lblStatus;
+        private System.Windows.Forms.ListBox lstArchivedTimetables;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Button btnDelete;
     }
 }

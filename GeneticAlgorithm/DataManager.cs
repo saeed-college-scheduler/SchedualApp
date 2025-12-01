@@ -1,147 +1,130 @@
 using System.Collections.Generic;
 using System.Linq;
-using SchedualApp; // افتراض أن الكلاسات المولدة موجودة في هذا الـ Namespace
+using System.Threading.Tasks;
+using System.Data.Entity;
+// تأكد من أن هذا الـ namespace هو الذي يحتوي على كياناتك (Course, Timetable, Room, etc.)
+// مثال: using SchedualApp.Models; 
 
 namespace SchedualApp.GeneticAlgorithm
 {
-    /// <summary>
-    /// مسؤول عن تحميل جميع البيانات الثابتة والقيود من قاعدة البيانات.
-    /// </summary>
-    public class DataManager
-    {
-        // الموارد الثابتة
-        public List<Cours> Courss { get; private set; }
-        public List<Lecturer> Lecturers { get; private set; }
-        public List<Room> Rooms { get; private set; }
-        public List<TimeSlotDefinition> TimeSlotDefinitions { get; private set; }
-        
-        // هياكل البيانات المساعدة للبحث السريع (O(1))
-        private Dictionary<int, Cours> _courseLookup;
-        private Dictionary<int, Lecturer> _lecturerLookup;
-        private Dictionary<int, Room> _roomLookup;
-        private HashSet<(int courseId, int lecturerId, string slotType)> _qualifiedLecturers;
-        private Dictionary<(int lecturerId, int dayOfWeek, int timeSlotId), bool> _lecturerAvailabilityLookup;
-        
-        // القيود
-        public List<CourseLevel> CourseLevels { get; private set; }
-        public List<CourseLecturer> CourseLecturers { get; private set; }
-        public List<LecturerAvailability> LecturerAvailabilities { get; private set; }
-        public List<RoomFeature> RoomFeatures { get; private set; }
-        
-        // متطلبات الجدولة
-        public List<RequiredSlot> RequiredSlots { get; private set; }
-        public int RequiredSlotsCount => RequiredSlots?.Count ?? 0;
-
-        public DataManager(int departmentId, int levelId)
-        {
-            // هنا يتم تحميل البيانات من قاعدة البيانات باستخدام Entity Framework
-            // لتبسيط المثال، سنفترض أن هذه الدوال تقوم بتحميل البيانات
-            LoadStaticData();
-            LoadConstraints();
-            BuildLookups();
-            GenerateRequiredSlots(departmentId, levelId);
-        }
-
-        private void LoadStaticData()
-        {
-            // يجب استبدال هذا بمنطق تحميل EF الفعلي
-            // مثال: using (var context = new SchedualAppModel()) { Courss = context.Courss.ToList(); }
-            
-            // بيانات وهمية (Mock Data)
-            Courss = new List<Cours> { new Cours { CourseID = 1, Code = "CS101", Title = "Intro to CS", LectureHours = 3, PracticalHours = 1 } };
-            Lecturers = new List<Lecturer> { new Lecturer { LecturerID = 1, FirstName = "Dr.", LastName = "Ahmed" } };
-            Rooms = new List<Room> { new Room { RoomID = 1, Name = "L101", Capacity = 60 } };
-            TimeSlotDefinitions = new List<TimeSlotDefinition> { new TimeSlotDefinition { TimeSlotDefinitionID = 1, SlotNumber = 1 } };
-        }
-
-        private void LoadConstraints()
-        {
-            // يجب استبدال هذا بمنطق تحميل EF الفعلي
-            CourseLevels = new List<CourseLevel> { new CourseLevel { CourseID = 1, DepartmentID = 1, LevelID = 1 } };
-            CourseLecturers = new List<CourseLecturer> { new CourseLecturer { CourseID = 1, LecturerID = 1, TeachingType = "Lecture" } };
-            LecturerAvailabilities = new List<LecturerAvailability>(); // افترض أنهم متاحون افتراضياً
-            RoomFeatures = new List<RoomFeature>(); // افترض عدم وجود متطلبات خاصة
-        }
-
-        private void BuildLookups()
-        {
-            // بناء القواميس للبحث السريع عن الموارد
-            _courseLookup = Courss.ToDictionary(c => c.CourseID);
-            _lecturerLookup = Lecturers.ToDictionary(l => l.LecturerID);
-            _roomLookup = Rooms.ToDictionary(r => r.RoomID);
-
-            // بناء مجموعة الهاش للتحقق من تأهيل المحاضرين (O(1))
-            _qualifiedLecturers = new HashSet<(int courseId, int lecturerId, string slotType)>(
-                CourseLecturers.Select(cl => (cl.CourseID, cl.LecturerID, cl.TeachingType))
-            );
-
-            // بناء قاموس لتوافر المحاضرين (O(1))
-            _lecturerAvailabilityLookup = LecturerAvailabilities
-                .ToDictionary(
-                    la => (la.LecturerID, la.DayOfWeek, la.TimeSlotDefinitionID),
-                    la => true // LecturerAvailability has no IsAvailable in generated type; assume presence means available
-                );
-        }
-
-        private void GenerateRequiredSlots(int departmentId, int levelId)
-        {
-            // توليد قائمة الفتحات المطلوبة بناءً على المقررات المخصصة لهذا القسم والمستوى
-            RequiredSlots = new List<RequiredSlot>();
-            
-            var relevantCourseIds = Courss.Where(c => CourseLevels.Any(cl => cl.CourseID == c.CourseID && cl.DepartmentID == departmentId && cl.LevelID == levelId)).Select(c=>c.CourseID).ToHashSet();
-
-            var relevantCourss = Courss.Where(c => relevantCourseIds.Contains(c.CourseID)).ToList();
-
-            int totalSlots = relevantCourss.Sum(c => c.LectureHours + c.PracticalHours);
-            try { RequiredSlots.Capacity = totalSlots; } catch { }
-
-            foreach (var course in relevantCourss)
-            {
-                for (int i = 0; i < course.LectureHours; i++)
-                {
-                    RequiredSlots.Add(new RequiredSlot { CourseID = course.CourseID, SlotType = "Lecture" });
-                }
-                for (int i = 0; i < course.PracticalHours; i++)
-                {
-                    RequiredSlots.Add(new RequiredSlot { CourseID = course.CourseID, SlotType = "Practical" });
-                }
-            }
-        }
-        
-        // دوال مساعدة للتحقق من القيود (تستخدم في TimetableFitness)
-        
-        public bool IsLecturerQualified(int lecturerId, int courseId, string slotType)
-        {
-            return _qualifiedLecturers.Contains((courseId, lecturerId, slotType));
-        }
-
-        public bool IsLecturerAvailable(int lecturerId, int dayOfWeek, int timeSlotDefinitionId)
-        {
-            if (_lecturerAvailabilityLookup.TryGetValue((lecturerId, dayOfWeek, timeSlotDefinitionId), out bool isAvailable))
-            {
-                return isAvailable;
-            }
-
-            // إذا لم يتم تحديد التوافر بشكل صريح، نفترض أنه متاح
-            return true;
-        }
-        
-        public Cours GetCours(int courseId) => _courseLookup.ContainsKey(courseId) ? _courseLookup[courseId] : null;
-        public Room GetRoom(int roomId) => _roomLookup.ContainsKey(roomId) ? _roomLookup[roomId] : null;
-        
-        public bool DoesRoomMeetCoursRequirements(int roomId, int courseId)
-        {
-            // منطق التحقق من متطلبات القاعة (Room Features)
-            // يتطلب مقارنة متطلبات المقرر (غير موجودة في التصميم الحالي) مع RoomFeatures
-            // لتبسيط: نفترض أن جميع القاعات تلبي جميع المتطلبات
-            return true;
-        }
-    }
-    
-    // كلاس مساعد لتمثيل الفتحات المطلوبة قبل الجدولة
+    // يمثل فتحة زمنية مطلوبة للجدولة
     public class RequiredSlot
     {
+        public int RequiredSlotID { get; set; }
         public int CourseID { get; set; }
-        public string SlotType { get; set; }
+        public int LecturerID { get; set; }
+        public string SlotType { get; set; } // "Lecture" أو "Practical" (مأخوذ من TeachingType)
+    }
+
+    public class DataManager
+    {
+        private readonly SchedualAppModel _context;
+
+        // البيانات الثابتة
+        public List<Lecturer> Lecturers { get; private set; }
+        public List<Cours> Courses { get; private set; }
+        public List<Room> Rooms { get; private set; }
+        public List<TimeSlotDefinition> TimeSlotDefinitions { get; private set; }
+        public List<LecturerAvailability> Availabilities { get; private set; }
+
+        // الكيانات الجديدة للعلاقات
+        public List<CourseLevel> CourseLevels { get; private set; }
+        public List<CourseLecturer> CourseLecturers { get; private set; }
+
+        // البيانات المطلوبة للجدولة
+        public List<RequiredSlot> RequiredSlots { get; private set; }
+
+        // بيانات الجدولة العالمية (القائمة السوداء)
+        public List<Timetable> ExistingTimetables { get; private set; }
+        public HashSet<(int dayOfWeek, int timeSlotId, int resourceId)> GlobalBlacklist { get; private set; } // (Day, Slot, Lecturer/Room ID)
+
+        public DataManager(SchedualAppModel context)
+        {
+            _context = context;
+            RequiredSlots = new List<RequiredSlot>();
+        }
+
+        public async Task LoadDataAsync(int departmentId, int levelId)
+        {
+            // 1. تحميل البيانات الثابتة
+            Lecturers = await _context.Lecturers.AsNoTracking().ToListAsync();
+            Rooms = await _context.Rooms.AsNoTracking().ToListAsync();
+            TimeSlotDefinitions = await _context.TimeSlotDefinitions.AsNoTracking().ToListAsync();
+            Availabilities = await _context.LecturerAvailabilities.AsNoTracking().ToListAsync();
+            Courses = await _context.Courses.AsNoTracking().ToListAsync(); // تحميل جميع المقررات
+
+            // 2. تحديد المقررات المطلوبة باستخدام CourseLevel
+            CourseLevels = await _context.CourseLevels
+                .Where(cl => cl.DepartmentID == departmentId && cl.LevelID == levelId)
+                .AsNoTracking().ToListAsync();
+
+            var courseIds = CourseLevels.Select(cl => cl.CourseID).ToList();
+
+            // 3. تحديد المحاضرين المسندين للمقررات المطلوبة باستخدام CourseLecturer
+            CourseLecturers = await _context.CourseLecturers
+                .Where(cl => courseIds.Contains(cl.CourseID))
+                .AsNoTracking().ToListAsync();
+
+            // 4. بناء القائمة السوداء العالمية
+            ExistingTimetables = await _context.Timetables.Include(t => t.ScheduleSlots).AsNoTracking().ToListAsync();
+            BuildGlobalBlacklist();
+
+            // 5. توليد الفتحات المطلوبة للجدولة
+            GenerateRequiredSlots();
+        }
+
+        private void BuildGlobalBlacklist()
+        {
+            GlobalBlacklist = new HashSet<(int dayOfWeek, int timeSlotId, int resourceId)>();
+
+            foreach (var timetable in ExistingTimetables)
+            {
+                foreach (var slot in timetable.ScheduleSlots)
+                {
+                    // Blacklist Lecturer
+                    GlobalBlacklist.Add((slot.DayOfWeek, slot.TimeSlotDefinitionID, slot.LecturerID));
+                    // Blacklist Room
+                    GlobalBlacklist.Add((slot.DayOfWeek, slot.TimeSlotDefinitionID, slot.RoomID));
+                }
+            }
+        }
+
+        private void GenerateRequiredSlots()
+        {
+            RequiredSlots.Clear();
+            int requiredSlotIdCounter = 1;
+
+            // نستخدم CourseLecturers لتحديد الحصص المطلوبة
+            foreach (var cl in CourseLecturers)
+            {
+                var course = GetCourse(cl.CourseID);
+                if (course == null) continue;
+
+                RequiredSlots.Add(new RequiredSlot
+                {
+                    RequiredSlotID = requiredSlotIdCounter++,
+                    CourseID = cl.CourseID,
+                    LecturerID = cl.LecturerID,
+                    SlotType = cl.TeachingType // استخدام TeachingType مباشرة
+                });
+            }
+        }
+
+        // الدوال المساعدة
+        public Cours GetCourse(int courseId) => Courses.FirstOrDefault(c => c.CourseID == courseId);
+        public Room GetRoom(int roomId) => Rooms.FirstOrDefault(r => r.RoomID == roomId);
+        public bool IsLecturerAvailable(int lecturerId, int dayOfWeek, int timeSlotId)
+        {
+            return Availabilities.Any(a => a.LecturerID == lecturerId && a.DayOfWeek == dayOfWeek && a.TimeSlotDefinitionID == timeSlotId);
+        }
+        public bool IsGloballyBlacklisted(int dayOfWeek, int timeSlotId, int resourceId)
+        {
+            return GlobalBlacklist.Contains((dayOfWeek, timeSlotId, resourceId));
+        }
+        public bool IsLecturerQualified(int lecturerId, int courseId, string slotType)
+        {
+            // التحقق من أن المحاضر مسند للمقرر وله نفس نوع التدريس
+            return CourseLecturers.Any(cl => cl.LecturerID == lecturerId && cl.CourseID == courseId && cl.TeachingType == slotType);
+        }
     }
 }

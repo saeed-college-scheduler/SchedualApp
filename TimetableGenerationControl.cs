@@ -1,125 +1,375 @@
-﻿using System;
+﻿using DocumentFormat.OpenXml.Drawing;
+using GeneticSharp.Domain;
+using GeneticSharp.Domain.Crossovers;
+using GeneticSharp.Domain.Mutations;
+using GeneticSharp.Domain.Populations;
+using GeneticSharp.Domain.Selections;
+using GeneticSharp.Domain.Terminations;
+using SchedualApp.GeneticAlgorithm;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.Entity;
+using System.Drawing;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Data.Entity;
-using System.Linq;
 
 namespace SchedualApp
 {
     public partial class TimetableGenerationControl : UserControl
     {
-        private SchedualAppModel db = new SchedualAppModel();
+        private SchedualAppModel _context;
+        private DataManager _dataManager;
+
+        // هيكل لعرض الجداول المحفوظة
+        private class TimetableArchiveItem
+        {
+            public int TimetableID { get; set; }
+            public string Name { get; set; }
+        }
 
         public TimetableGenerationControl()
         {
             InitializeComponent();
-            LoadInitialData();
+            _context = new SchedualAppModel();
+            this.Load += TimetableGenerationControl_Load;
         }
 
-        private async void LoadInitialData()
+        private async void TimetableGenerationControl_Load(object sender, EventArgs e)
         {
-            try
-            {
-                // Load Departments
-                var departments = await db.Departments.ToListAsync();
-                cmbDepartment.DataSource = departments;
-                cmbDepartment.DisplayMember = "Name";
-                cmbDepartment.ValueMember = "DepartmentID";
-
-                // Load Levels (assuming Level entity exists and has Name/LevelID)
-                var levels = await db.Levels.ToListAsync();
-                cmbLevel.DataSource = levels;
-                cmbLevel.DisplayMember = "Name";
-                cmbLevel.ValueMember = "LevelID";
-
-                // Set default selections
-                if (cmbSemester.Items.Count > 0) cmbSemester.SelectedIndex = 0;
-                if (cmbDepartment.Items.Count > 0) cmbDepartment.SelectedIndex = 0;
-                if (cmbLevel.Items.Count > 0) cmbLevel.SelectedIndex = 0;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error loading initial data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            await LoadInitialDataAsync();
+            await LoadArchivedTimetablesAsync();
         }
 
-        private async void BtnGenerate_Click(object sender, EventArgs e)
+        private async Task LoadInitialDataAsync()
         {
-            if (cmbSemester.SelectedItem == null || cmbDepartment.SelectedItem == null || cmbLevel.SelectedItem == null)
+            // تحميل بيانات الأقسام والمستويات لملء القوائم المنسدلة
+            var departments = await _context.Departments.AsNoTracking().ToListAsync();
+            cboDepartment.DataSource = departments;
+            cboDepartment.DisplayMember = "Name";
+            cboDepartment.ValueMember = "DepartmentID";
+
+            var levels = await _context.Levels.AsNoTracking().ToListAsync();
+            cboLevel.DataSource = levels;
+            cboLevel.DisplayMember = "Name";
+            cboLevel.ValueMember = "LevelID";
+        }
+
+        private async Task LoadArchivedTimetablesAsync()
+        {
+            var timetables = await _context.Timetables.AsNoTracking().ToListAsync();
+            // تم تصحيح استخدام TimetableName
+            var archiveItems = timetables.Select(t => new TimetableArchiveItem { TimetableID = t.TimetableID, Name = t.TimetableName }).ToList();
+
+            // ربط قائمة الجداول المحفوظة
+            lstArchivedTimetables.DataSource = archiveItems;
+            lstArchivedTimetables.DisplayMember = "Name";
+            lstArchivedTimetables.ValueMember = "TimetableID";
+        }
+
+        private async void btnGenerate_Click(object sender, EventArgs e)
+        {
+            if (cboDepartment.SelectedValue == null || cboLevel.SelectedValue == null || string.IsNullOrWhiteSpace(txtTimetableName.Text))
             {
-                MessageBox.Show("Please select Semester, Department, and Level before generating.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("الرجاء اختيار القسم والمستوى وإدخال اسم للجدول.", "خطأ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            btnGenerate.Enabled = false;
-            progressBar.Value = 0;
-            txtResults.Clear();
+            int departmentId = (int)cboDepartment.SelectedValue;
+            int levelId = (int)cboLevel.SelectedValue;
+            string timetableName = txtTimetableName.Text.Trim();
 
-            string selectedSemester = cmbSemester.SelectedItem.ToString();
-            string selectedDepartment = (cmbDepartment.SelectedItem as dynamic)?.Name;
-            string selectedLevel = (cmbLevel.SelectedItem as dynamic)?.Name;
+            // 1. تهيئة مدير البيانات
+            _dataManager = new DataManager(_context);
+            await _dataManager.LoadDataAsync(departmentId, levelId);
 
-            txtResults.AppendText($"Starting timetable generation for {selectedSemester}, Dept: {selectedDepartment}, Level: {selectedLevel}...\r\n");
-
-            try
+            if (!_dataManager.RequiredSlots.Any())
             {
-                // 1. Gather necessary data (Courses, Lecturers, Rooms, TimeSlots) filtered by Department and Level
-                txtResults.AppendText("Gathering data...\r\n");
+                lblStatus.Text = "لا توجد مقررات/حصص مطلوبة للجدولة لهذا القسم والمستوى.";
+                lblStatus.ForeColor = Color.Red;
+                return;
+            }
 
-                // Example of filtering logic (assuming Course entity has DepartmentID and LevelID)
-                // var departmentId = (int)cmbDepartment.SelectedValue;
-                // var levelId = (int)cmbLevel.SelectedValue;
-                // var coursesToSchedule = await db.Courses
-                //     .Where(c => c.DepartmentID == departmentId && c.LevelID == levelId)
-                //     .ToListAsync();
+            // 2. تهيئة الخوارزمية الجينية
+            var chromosome = new TimetableChromosome(_dataManager);
+            var fitness = new TimetableFitness(_dataManager);
+            var population = new Population(50, 100, chromosome); // حجم السكان: 50-100
 
-                // Simulation of the complex generation process
-                progressBar.Maximum = 100;
-                for (int i = 0; i <= 100; i += 10)
+            // تهيئة الخوارزمية الجينية (تم تصحيح استخدام الكلاس)
+            var ga = new GeneticSharp.Domain.GeneticAlgorithm(
+                population,
+                fitness,
+                new TournamentSelection(),
+                new UniformCrossover(),
+                new UniformMutation(true)
+            );
+
+            ga.Termination = new FitnessStagnationTermination(100); // التوقف بعد 100 جيل بدون تحسن
+            ga.GenerationRan += (s, args) =>
+            {
+                // تحديث شريط التقدم والحالة
+                var bestFitness = ga.BestChromosome.Fitness.Value;
+                var currentGeneration = ga.GenerationsNumber;
+
+                // استخدام Invoke لتحديث الواجهة من Thread آخر
+                this.Invoke((MethodInvoker)delegate
                 {
-                    await Task.Delay(200);
-                    progressBar.Value = i;
-                    txtResults.AppendText($"Progress: {i}%\r\n");
+                    lblStatus.Text = $"الجيل: {currentGeneration}. أفضل لياقة: {bestFitness:N2}";
+                    progressBar.Value = Math.Min(progressBar.Maximum, currentGeneration);
+                    Application.DoEvents(); // تحديث الواجهة
+                });
+            };
+
+            // 3. تشغيل الخوارزمية بشكل غير متزامن
+            lblStatus.Text = "جاري توليد الجدول الزمني... يرجى الانتظار.";
+            progressBar.Maximum = 500; // عدد الأجيال الأقصى
+            progressBar.Value = 0;
+            btnGenerate.Enabled = false;
+
+            await Task.Run(() => ga.Start());
+
+            btnGenerate.Enabled = true;
+
+            // 4. عرض النتائج وحفظها
+            var bestTimetable = (TimetableChromosome)ga.BestChromosome;
+            DisplaySchedule(bestTimetable);
+
+            if (bestTimetable.Fitness.Value > 900000) // افتراض أن 900000 تعني جدولاً جيداً جداً
+            {
+                lblStatus.Text = $"تم إنشاء الجدول بنجاح. اللياقة: {bestTimetable.Fitness.Value:N2}";
+                lblStatus.ForeColor = Color.Green;
+                await SaveTimetableAsync(bestTimetable, timetableName, departmentId, levelId);
+            }
+            else
+            {
+                lblStatus.Text = $"تم إنشاء الجدول، لكنه يحتوي على تعارضات. اللياقة: {bestTimetable.Fitness.Value:N2}";
+                lblStatus.ForeColor = Color.Orange;
+            }
+        }
+
+        private async Task SaveTimetableAsync(TimetableChromosome timetable, string name, int departmentId, int levelId)
+        {
+            // Implementation needed: Save Timetable and its ScheduleSlots to DB
+            // This action CONSUMES the resources (Lecturers/Rooms) globally.
+
+            // مثال على الحفظ (يجب استبداله بمنطق Entity Framework الفعلي)
+
+            //var newTimetable = new Timetable
+            //{
+            //    TimetableName = name,
+            //    DepartmentID = departmentId,
+            //    LevelID = levelId,
+            //    Semester="السادس",
+            //    CreationDate = DateTime.Now,
+            //    IsApproved = true,
+            //    ScheduleSlots = timetable.GenesList.Select(s => new ScheduleSlot
+            //    {
+            //        CourseID = s.CourseID,
+            //        LecturerID = s.LecturerID,
+            //        DayOfWeek = s.DayOfWeek,
+            //        TimeSlotDefinitionID = s.TimeSlotDefinitionID,
+            //        RoomID = s.RoomID
+            //    }).ToList()
+            //};
+            // ... (داخل SaveTimetableAsync)
+            var newTimetable = new Timetable
+            {
+                TimetableName = name,
+                DepartmentID = departmentId,
+                LevelID = levelId,
+
+                // تأكد من تعيين قيمة لـ Semester
+                // استخدم القيمة الثابتة "الترم السادس" مؤقتاً أو قم بتمريرها من واجهة المستخدم
+                Semester = "الترم السادس",
+
+                CreationDate = DateTime.Now,
+                IsApproved = false,
+                ScheduleSlots = timetable.GenesList.Select(s => new ScheduleSlot
+                {
+                    CourseID = s.CourseID,
+                    LecturerID = s.LecturerID,
+                    DayOfWeek = s.DayOfWeek,
+                    TimeSlotDefinitionID = s.TimeSlotDefinitionID,
+                    RoomID = s.RoomID,
+                    SlotType = s.SlotType
+
+                    // إذا كان لديك خاصية SlotType مطلوبة في ScheduleSlot، يجب تعيينها هنا
+                    // SlotType = "Lecture", // مثال
+
+                }).ToList()
+            };
+            // ...
+
+            _context.Timetables.Add(newTimetable);
+            await _context.SaveChangesAsync();
+            
+
+            await LoadArchivedTimetablesAsync();
+            MessageBox.Show("تم حفظ الجدول بنجاح.", "نجاح", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private async void BtnDelete_Click(object sender, EventArgs e)
+        {
+            if (lstArchivedTimetables.SelectedValue != null)
+            {
+                int timetableId = (int)lstArchivedTimetables.SelectedValue;
+                var result = MessageBox.Show($"هل أنت متأكد من حذف الجدول رقم {timetableId}؟ سيتم استعادة الموارد.", "تأكيد الحذف", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+                if (result == DialogResult.Yes)
+                {
+                    // Implementation needed: Delete Timetable and its ScheduleSlots from DB
+                    // This action RESTORES the resources (Lecturers/Rooms) globally.
+
+                    lblStatus.Text = $"تم حذف الجدول رقم {timetableId}. جاري تحديث القائمة...";
+                    // مثال على الحذف (يجب استبداله بمنطق Entity Framework الفعلي)
+                    /*
+                    var timetableToDelete = await _context.Timetables.Include(t => t.ScheduleSlots).FirstOrDefaultAsync(t => t.TimetableID == timetableId);
+                    if (timetableToDelete != null)
+                    {
+                        _context.ScheduleSlots.RemoveRange(timetableToDelete.ScheduleSlots);
+                        _context.Timetables.Remove(timetableToDelete);
+                        await _context.SaveChangesAsync();
+                    }
+                    */
+
+                    await LoadArchivedTimetablesAsync();
+                    MessageBox.Show("تم حذف الجدول بنجاح.", "نجاح", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+        }
+
+        //private void DisplaySchedule(TimetableChromosome timetable)
+        //{
+        //    // تحويل الكروموسوم إلى DataTable للعرض في DataGridView
+        //    var dt = new DataTable();
+        //    dt.Columns.Add("اليوم");
+        //    dt.Columns.Add("الوقت");
+        //    dt.Columns.Add("المقرر");
+        //    dt.Columns.Add("المحاضر");
+        //    dt.Columns.Add("القاعة");
+
+        //    var sortedSlots = timetable.GenesList.OrderBy(s => s.DayOfWeek).ThenBy(s => s.TimeSlotDefinitionID);
+
+        //    foreach (var slot in sortedSlots)
+        //    {
+        //        var course = _dataManager.GetCourse(slot.CourseID);
+        //        var lecturer = _context.Lecturers.FirstOrDefault(l => l.LecturerID == slot.LecturerID);
+        //        var room = _dataManager.GetRoom(slot.RoomID);
+        //        var timeSlot = _dataManager.TimeSlotDefinitions.FirstOrDefault(ts => ts.TimeSlotDefinitionID == slot.TimeSlotDefinitionID);
+
+        //        dt.Rows.Add(
+        //            ((DayOfWeek)(slot.DayOfWeek - 1)).ToString(),
+        //            timeSlot?.StartTime.ToString(@"hh\:mm") + " - " + timeSlot?.EndTime.ToString(@"hh\:mm"),
+        //            course?.Title,
+        //            $"{lecturer?.FirstName} {lecturer?.LastName}",
+        //            room?.Name
+        //        );
+        //    }
+
+        //    dgvTimetable.DataSource = dt;
+        //    dgvTimetable.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
+        //}
+
+        private void DisplaySchedule(TimetableChromosome timetable)
+        {
+            // 1. الحصول على جميع الفترات الزمنية المتاحة (الأعمدة)
+            var timeSlots = _dataManager.TimeSlotDefinitions.OrderBy(ts => ts.SlotNumber).ToList();
+
+            // 2. تحديد الأيام (الصفوف) - نستخدم الترتيب المخصص الذي ناقشناه سابقاً
+            var customDayOrder = new System.DayOfWeek[]
+            {
+        System.DayOfWeek.Saturday,
+        System.DayOfWeek.Sunday,
+        System.DayOfWeek.Monday,
+        System.DayOfWeek.Tuesday,
+        System.DayOfWeek.Wednesday,
+        System.DayOfWeek.Thursday
+                // تم استثناء الجمعة
+            };
+
+            // 3. إنشاء DataTable بالهيكل الجديد (اليوم + الفترات الزمنية)
+            var dt = new DataTable();
+            dt.Columns.Add("اليوم"); // العمود الأول: اليوم
+
+            // إضافة أعمدة الفترات الزمنية
+            foreach (var slot in timeSlots)
+            {
+                dt.Columns.Add($"{slot.StartTime.ToString(@"hh\:mm")} - {slot.EndTime.ToString(@"hh\:mm")}");
+            }
+
+            // 4. تعبئة البيانات
+            var slotsByDayAndTime = timetable.GenesList
+                .GroupBy(s => new { Day = s.DayOfWeek, TimeSlot = s.TimeSlotDefinitionID })
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            foreach (var day in customDayOrder)
+            {
+                // إنشاء صف جديد يبدأ باسم اليوم
+                var row = dt.NewRow();
+                row["اليوم"] = day.ToString();
+
+                // تعبئة خلايا الصف بناءً على الفترات الزمنية
+                for (int i = 0; i < timeSlots.Count; i++)
+                {
+                    var timeSlot = timeSlots[i];
+
+                    // البحث عن ScheduleSlot المطابق لليوم والفترة
+                    var key = new { Day = (int)day, TimeSlot = timeSlot.TimeSlotDefinitionID };
+
+                    // يجب أن نستخدم DayOfWeek كـ int في المفتاح
+                    // ملاحظة: إذا كان DayOfWeek في ScheduleSlot يبدأ من 1 (الأحد) بدلاً من 0 (الأحد)، يجب تعديل المفتاح
+                    // بناءً على الكود السابق (slot.DayOfWeek - 1) في السطر 231، نفترض أن s.DayOfWeek هو int يبدأ من 1
+                    var adjustedKey = new { Day = (int)day + 1, TimeSlot = timeSlot.TimeSlotDefinitionID };
+
+                    if (slotsByDayAndTime.ContainsKey(adjustedKey))
+                    {
+                        var scheduleSlots = slotsByDayAndTime[adjustedKey];
+
+                        // تجميع بيانات SchedualSlot في متغير سترنج واحد
+                        var cellContent = new System.Text.StringBuilder();
+                        foreach (var slotData in scheduleSlots)
+                        {
+                            var course = _dataManager.GetCourse(slotData.CourseID);
+                            var lecturer = _context.Lecturers.FirstOrDefault(l => l.LecturerID == slotData.LecturerID);
+                            var room = _dataManager.GetRoom(slotData.RoomID);
+
+                            cellContent.AppendLine($"{course?.Title} ({slotData.SlotType})");
+                            cellContent.AppendLine($"المحاضر: {lecturer?.FirstName} {lecturer?.LastName}");
+                            cellContent.AppendLine($"القاعة: {room?.Name}");
+                            cellContent.AppendLine("---");
+                        }
+
+                        // إزالة آخر "---"
+                        if (cellContent.Length > 0)
+                        {
+                            cellContent.Length -= 4;
+                        }
+
+                        row[timeSlot.StartTime.ToString(@"hh\:mm") + " - " + timeSlot.EndTime.ToString(@"hh\:mm")] = cellContent.ToString();
+                    }
+                    else
+                    {
+                        row[timeSlot.StartTime.ToString(@"hh\:mm") + " - " + timeSlot.EndTime.ToString(@"hh\:mm")] = string.Empty;
+                    }
                 }
 
-                // 2. Run the scheduling algorithm
-                txtResults.AppendText("Running scheduling algorithm...\r\n");
-                await Task.Delay(1000);
+                dt.Rows.Add(row);
+            }
 
-                // 3. Display results
-                txtResults.AppendText("Timetable generated successfully!\r\n");
-                txtResults.AppendText("Summary: 50 classes scheduled, 3 conflicts resolved.\r\n");
-                MessageBox.Show("Timetable Generation Complete!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            catch (Exception ex)
-            {
-                txtResults.AppendText($"ERROR: Timetable generation failed: {ex.Message}\r\n");
-                MessageBox.Show($"An error occurred during generation: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                progressBar.Value = 100;
-                btnGenerate.Enabled = true;
-            }
+            dgvTimetable.DataSource = dt;
+            dgvTimetable.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
         }
 
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                db.Dispose();
-            }
-            base.Dispose(disposing);
-        }
 
-        private void txtResults_TextChanged(object sender, EventArgs e)
+        private void dgvTimetable_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
 
         }
 
-        private void cmbLevel_SelectedIndexChanged(object sender, EventArgs e)
-        {
+        //private void btnGenerate_Click(object sender, EventArgs e)
+        //{
 
-        }
+        //}
     }
 }

@@ -149,6 +149,11 @@
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Migrations\202511302335125_CreateDataBase.cs" />
+    <Compile Include="Migrations\202511302335125_CreateDataBase.Designer.cs">
+      <DependentUpon>202511302335125_CreateDataBase.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Room.cs" />
     <Compile Include="RoomFeature.cs" />
@@ -178,6 +183,11 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>SchedualDBDataSet2.xsd</DependentUpon>
+    </Compile>
+    <Compile Include="SchedualDBDataSet3.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>SchedualDBDataSet3.xsd</DependentUpon>
     </Compile>
     <Compile Include="ScheduleSlot.cs" />
     <Compile Include="TimeSlotDefinition.cs" />
@@ -232,6 +242,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202511302335125_CreateDataBase.resx">
+      <DependentUpon>202511302335125_CreateDataBase.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -290,6 +303,17 @@
     </None>
     <None Include="SchedualDBDataSet2.xss">
       <DependentUpon>SchedualDBDataSet2.xsd</DependentUpon>
+    </None>
+    <None Include="SchedualDBDataSet3.xsc">
+      <DependentUpon>SchedualDBDataSet3.xsd</DependentUpon>
+    </None>
+    <None Include="SchedualDBDataSet3.xsd">
+      <Generator>MSDataSetGenerator</Generator>
+      <LastGenOutput>SchedualDBDataSet3.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="SchedualDBDataSet3.xss">
+      <DependentUpon>SchedualDBDataSet3.xsd</DependentUpon>
     </None>
   </ItemGroup>
   <ItemGroup>
