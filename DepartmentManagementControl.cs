@@ -60,6 +60,7 @@ namespace SchedualApp
         {
             currentDepartment = null;
             txtDepartmentName.Clear();
+            txtDepartmentDescription.Clear();
 
             btnDelete.Enabled = false;
             btnSave.Text = "Save";

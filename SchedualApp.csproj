@@ -125,6 +125,9 @@
     <Compile Include="CoursManagementControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="CoursManagementControl.Designer.cs">
+      <DependentUpon>CoursManagementControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Department.cs" />
     <Compile Include="DepartmentManagementControl.cs">
       <SubType>UserControl</SubType>
@@ -233,6 +236,9 @@
     </Compile>
     <EmbeddedResource Include="CourseLevelManagementControl.resx">
       <DependentUpon>CourseLevelManagementControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CoursManagementControl.resx">
+      <DependentUpon>CoursManagementControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="DepartmentManagementControl.resx">
       <DependentUpon>DepartmentManagementControl.cs</DependentUpon>

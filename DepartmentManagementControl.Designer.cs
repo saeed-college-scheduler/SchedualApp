@@ -31,26 +31,26 @@
             this.components = new System.ComponentModel.Container();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.dataGridViewDepartments = new System.Windows.Forms.DataGridView();
+            this.departmentIDDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.nameDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.descriptionDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.departmentsBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.schedualDBDataSet = new SchedualApp.SchedualDBDataSet();
             this.panelForm = new System.Windows.Forms.Panel();
+            this.txtDepartmentDescription = new System.Windows.Forms.TextBox();
+            this.lblDepartmentDescription = new System.Windows.Forms.Label();
             this.btnDelete = new System.Windows.Forms.Button();
             this.btnSave = new System.Windows.Forms.Button();
             this.txtDepartmentName = new System.Windows.Forms.TextBox();
             this.lblDepartmentName = new System.Windows.Forms.Label();
             this.btnNew = new System.Windows.Forms.Button();
-            this.schedualDBDataSet = new SchedualApp.SchedualDBDataSet();
-            this.departmentsBindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.departmentsTableAdapter = new SchedualApp.SchedualDBDataSetTableAdapters.DepartmentsTableAdapter();
-            this.departmentIDDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.nameDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.descriptionDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.lblDepartmentDescription = new System.Windows.Forms.Label();
-            this.txtDepartmentDescription = new System.Windows.Forms.TextBox();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewDepartments)).BeginInit();
-            this.panelForm.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.schedualDBDataSet)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.departmentsBindingSource)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.schedualDBDataSet)).BeginInit();
+            this.panelForm.SuspendLayout();
             this.SuspendLayout();
             // 
             // tableLayoutPanel1
@@ -91,85 +91,6 @@
             this.dataGridViewDepartments.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewDepartments_CellContentClick);
             this.dataGridViewDepartments.SelectionChanged += new System.EventHandler(this.DataGridViewDepartments_SelectionChanged);
             // 
-            // panelForm
-            // 
-            this.panelForm.Controls.Add(this.txtDepartmentDescription);
-            this.panelForm.Controls.Add(this.lblDepartmentDescription);
-            this.panelForm.Controls.Add(this.btnDelete);
-            this.panelForm.Controls.Add(this.btnSave);
-            this.panelForm.Controls.Add(this.txtDepartmentName);
-            this.panelForm.Controls.Add(this.lblDepartmentName);
-            this.panelForm.Controls.Add(this.btnNew);
-            this.panelForm.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelForm.Location = new System.Drawing.Point(483, 3);
-            this.panelForm.Name = "panelForm";
-            this.panelForm.Size = new System.Drawing.Size(314, 594);
-            this.panelForm.TabIndex = 1;
-            // 
-            // btnDelete
-            // 
-            this.btnDelete.Location = new System.Drawing.Point(15, 158);
-            this.btnDelete.Name = "btnDelete";
-            this.btnDelete.Size = new System.Drawing.Size(358, 35);
-            this.btnDelete.TabIndex = 4;
-            this.btnDelete.Text = "Delete";
-            this.btnDelete.UseVisualStyleBackColor = true;
-            this.btnDelete.Click += new System.EventHandler(this.BtnDelete_ClickAsync);
-            // 
-            // btnSave
-            // 
-            this.btnSave.Location = new System.Drawing.Point(15, 117);
-            this.btnSave.Name = "btnSave";
-            this.btnSave.Size = new System.Drawing.Size(358, 35);
-            this.btnSave.TabIndex = 3;
-            this.btnSave.Text = "Save";
-            this.btnSave.UseVisualStyleBackColor = true;
-            this.btnSave.Click += new System.EventHandler(this.BtnSave_ClickAsync);
-            // 
-            // txtDepartmentName
-            // 
-            this.txtDepartmentName.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.schedualDBDataSet, "Departments.Name", true));
-            this.txtDepartmentName.Location = new System.Drawing.Point(169, 20);
-            this.txtDepartmentName.Multiline = true;
-            this.txtDepartmentName.Name = "txtDepartmentName";
-            this.txtDepartmentName.Size = new System.Drawing.Size(204, 22);
-            this.txtDepartmentName.TabIndex = 2;
-            this.txtDepartmentName.TextChanged += new System.EventHandler(this.txtDepartmentName_TextChanged);
-            // 
-            // lblDepartmentName
-            // 
-            this.lblDepartmentName.AutoSize = true;
-            this.lblDepartmentName.Location = new System.Drawing.Point(3, 23);
-            this.lblDepartmentName.Name = "lblDepartmentName";
-            this.lblDepartmentName.Size = new System.Drawing.Size(117, 16);
-            this.lblDepartmentName.TabIndex = 1;
-            this.lblDepartmentName.Text = "Department Name";
-            this.lblDepartmentName.Click += new System.EventHandler(this.lblDepartmentName_Click);
-            // 
-            // btnNew
-            // 
-            this.btnNew.Location = new System.Drawing.Point(15, 76);
-            this.btnNew.Name = "btnNew";
-            this.btnNew.Size = new System.Drawing.Size(358, 35);
-            this.btnNew.TabIndex = 0;
-            this.btnNew.Text = "New";
-            this.btnNew.UseVisualStyleBackColor = true;
-            this.btnNew.Click += new System.EventHandler(this.BtnNew_Click);
-            // 
-            // schedualDBDataSet
-            // 
-            this.schedualDBDataSet.DataSetName = "SchedualDBDataSet";
-            this.schedualDBDataSet.SchemaSerializationMode = System.Data.SchemaSerializationMode.IncludeSchema;
-            // 
-            // departmentsBindingSource
-            // 
-            this.departmentsBindingSource.DataMember = "Departments";
-            this.departmentsBindingSource.DataSource = this.schedualDBDataSet;
-            // 
-            // departmentsTableAdapter
-            // 
-            this.departmentsTableAdapter.ClearBeforeFill = true;
-            // 
             // departmentIDDataGridViewTextBoxColumn
             // 
             this.departmentIDDataGridViewTextBoxColumn.DataPropertyName = "DepartmentID";
@@ -197,14 +118,30 @@
             this.descriptionDataGridViewTextBoxColumn.ReadOnly = true;
             this.descriptionDataGridViewTextBoxColumn.Width = 125;
             // 
-            // lblDepartmentDescription
+            // departmentsBindingSource
             // 
-            this.lblDepartmentDescription.AutoSize = true;
-            this.lblDepartmentDescription.Location = new System.Drawing.Point(3, 55);
-            this.lblDepartmentDescription.Name = "lblDepartmentDescription";
-            this.lblDepartmentDescription.Size = new System.Drawing.Size(148, 16);
-            this.lblDepartmentDescription.TabIndex = 5;
-            this.lblDepartmentDescription.Text = "Department Description";
+            this.departmentsBindingSource.DataMember = "Departments";
+            this.departmentsBindingSource.DataSource = this.schedualDBDataSet;
+            // 
+            // schedualDBDataSet
+            // 
+            this.schedualDBDataSet.DataSetName = "SchedualDBDataSet";
+            this.schedualDBDataSet.SchemaSerializationMode = System.Data.SchemaSerializationMode.IncludeSchema;
+            // 
+            // panelForm
+            // 
+            this.panelForm.Controls.Add(this.txtDepartmentDescription);
+            this.panelForm.Controls.Add(this.lblDepartmentDescription);
+            this.panelForm.Controls.Add(this.btnDelete);
+            this.panelForm.Controls.Add(this.btnSave);
+            this.panelForm.Controls.Add(this.txtDepartmentName);
+            this.panelForm.Controls.Add(this.lblDepartmentName);
+            this.panelForm.Controls.Add(this.btnNew);
+            this.panelForm.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panelForm.Location = new System.Drawing.Point(483, 3);
+            this.panelForm.Name = "panelForm";
+            this.panelForm.Size = new System.Drawing.Size(314, 594);
+            this.panelForm.TabIndex = 1;
             // 
             // txtDepartmentDescription
             // 
@@ -214,6 +151,72 @@
             this.txtDepartmentDescription.Name = "txtDepartmentDescription";
             this.txtDepartmentDescription.Size = new System.Drawing.Size(204, 22);
             this.txtDepartmentDescription.TabIndex = 6;
+            // 
+            // lblDepartmentDescription
+            // 
+            this.lblDepartmentDescription.AutoSize = true;
+            this.lblDepartmentDescription.Location = new System.Drawing.Point(3, 55);
+            this.lblDepartmentDescription.Name = "lblDepartmentDescription";
+            this.lblDepartmentDescription.Size = new System.Drawing.Size(148, 16);
+            this.lblDepartmentDescription.TabIndex = 5;
+            this.lblDepartmentDescription.Text = "Department Description";
+            // 
+            // btnDelete
+            // 
+            this.btnDelete.BackColor = System.Drawing.Color.OrangeRed;
+            this.btnDelete.Location = new System.Drawing.Point(15, 158);
+            this.btnDelete.Name = "btnDelete";
+            this.btnDelete.Size = new System.Drawing.Size(358, 35);
+            this.btnDelete.TabIndex = 4;
+            this.btnDelete.Text = "Delete";
+            this.btnDelete.UseVisualStyleBackColor = false;
+            this.btnDelete.Click += new System.EventHandler(this.BtnDelete_ClickAsync);
+            // 
+            // btnSave
+            // 
+            this.btnSave.BackColor = System.Drawing.SystemColors.AppWorkspace;
+            this.btnSave.Location = new System.Drawing.Point(15, 117);
+            this.btnSave.Name = "btnSave";
+            this.btnSave.Size = new System.Drawing.Size(358, 35);
+            this.btnSave.TabIndex = 3;
+            this.btnSave.Text = "Save";
+            this.btnSave.UseVisualStyleBackColor = false;
+            this.btnSave.Click += new System.EventHandler(this.BtnSave_ClickAsync);
+            // 
+            // txtDepartmentName
+            // 
+            this.txtDepartmentName.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.schedualDBDataSet, "Departments.Name", true));
+            this.txtDepartmentName.Location = new System.Drawing.Point(169, 20);
+            this.txtDepartmentName.Multiline = true;
+            this.txtDepartmentName.Name = "txtDepartmentName";
+            this.txtDepartmentName.Size = new System.Drawing.Size(204, 22);
+            this.txtDepartmentName.TabIndex = 2;
+            this.txtDepartmentName.TextChanged += new System.EventHandler(this.txtDepartmentName_TextChanged);
+            // 
+            // lblDepartmentName
+            // 
+            this.lblDepartmentName.AutoSize = true;
+            this.lblDepartmentName.Location = new System.Drawing.Point(3, 23);
+            this.lblDepartmentName.Name = "lblDepartmentName";
+            this.lblDepartmentName.Size = new System.Drawing.Size(117, 16);
+            this.lblDepartmentName.TabIndex = 1;
+            this.lblDepartmentName.Text = "Department Name";
+            this.lblDepartmentName.Click += new System.EventHandler(this.lblDepartmentName_Click);
+            // 
+            // btnNew
+            // 
+            this.btnNew.BackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.btnNew.Location = new System.Drawing.Point(15, 76);
+            this.btnNew.Name = "btnNew";
+            this.btnNew.Size = new System.Drawing.Size(358, 35);
+            this.btnNew.TabIndex = 0;
+            this.btnNew.Text = "New";
+            this.btnNew.UseVisualStyleBackColor = false;
+            this.btnNew.Click += new System.EventHandler(this.BtnNew_Click);
+            // 
+            // departmentsTableAdapter
+            // 
+            this.departmentsTableAdapter.ClearBeforeFill = true;
             // 
             // contextMenuStrip1
             // 
@@ -231,10 +234,10 @@
             this.Load += new System.EventHandler(this.DepartmentManagementControl_Load);
             this.tableLayoutPanel1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewDepartments)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.departmentsBindingSource)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.schedualDBDataSet)).EndInit();
             this.panelForm.ResumeLayout(false);
             this.panelForm.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.schedualDBDataSet)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.departmentsBindingSource)).EndInit();
             this.ResumeLayout(false);
 
         }
