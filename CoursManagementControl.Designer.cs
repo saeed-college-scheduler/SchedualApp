@@ -1,4 +1,4 @@
-﻿namespace SchedualApp
+namespace SchedualApp
 {
     partial class CoursManagementControl
     {
