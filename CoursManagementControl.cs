@@ -12,23 +12,17 @@ namespace SchedualApp
     {
         private BindingList<Cours> _bindingList;
         private int _selectedCourseId;
+        private SchedualAppModel _db = new SchedualAppModel();
 
         public CoursManagementControl()
         {
             InitializeComponent();
 
-            // منع تحميل البيانات وقت التصميم لتجنب الأخطاء
-            //if (LicenseManager.UsageMode == LicenseManagerUsageMode.Designtime) return;
-
             this.Load += CoursManagementControl_Load;
-
-            // إضافة معالج لأخطاء الشبكة لمنع ظهور النافذة المنبثقة المزعجة
-            this._dataGridView.DataError += (s, e) => { e.ThrowException = false; };
         }
 
         private async void CoursManagementControl_Load(object sender, EventArgs e)
         {
-            //if (this.DesignMode || LicenseManager.UsageMode == LicenseManagerUsageMode.Designtime) return;
             await LoadDataAsync();
         }
 
@@ -36,16 +30,9 @@ namespace SchedualApp
         {
             try
             {
-                using (var ctx = new SchedualAppModel())
-                {
-                    // الحل الجذري لمشكلة ObjectDisposedException
-                    // نوقف إنشاء البروكسي لنتعامل مع كائنات عادية فقط
-                    ctx.Configuration.ProxyCreationEnabled = false;
-
-                    var list = await ctx.Courses.AsNoTracking().ToListAsync();
-                    _bindingList = new BindingList<Cours>(list);
-                    _dataGridView.DataSource = _bindingList;
-                }
+                var list = await _db.Courses.AsNoTracking().ToListAsync();
+                _bindingList = new BindingList<Cours>(list);
+                _dataGridView.DataSource = _bindingList;
             }
             catch (Exception ex)
             {
@@ -55,7 +42,34 @@ namespace SchedualApp
 
         private async void BtnSave_Click(object sender, EventArgs e)
         {
+            // 1. تعريف متغير لاستقبال الرقم
+            int lectureHours;
+            int practicalHours;
+
+            // 2. محاولة تحويل النص إلى رقم
+            bool isNumber = int.TryParse(_txtLectureHours.Text, out lectureHours) && int.TryParse(_txtPracticalHours.Text, out practicalHours);
+
+            // 3. التحقق من النتيجة
+            if (!isNumber)
+            {
+                // الحالة: المستخدم أدخل نصاً أو رموزاً غير صالحة
+                MessageBox.Show("عفواً، يجب إدخال قيمة رقمية فقط في خانة الساعات.", "خطأ في الإدخال");
+
+                // إعادة التركيز على الحقل وتفريغه (اختياري)
+                _txtLectureHours.Focus();
+                _txtLectureHours.SelectAll();
+                return; // إيقاف تنفيذ الكود
+            }
+
+            // 4. (اختياري) التحقق من أن الرقم ليس سالباً
+            if (lectureHours < 0)
+            {
+                MessageBox.Show("لا يمكن أن تكون الساعات بالسالب.");
+                return;
+            }
+
             await SaveDataInternalAsync();
+            MessageBox.Show("تم حفظ البيانات بنجاح", "نجاح", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private async Task SaveDataInternalAsync()
@@ -64,35 +78,33 @@ namespace SchedualApp
 
             try
             {
-                using (var ctx = new SchedualAppModel())
+                if (_selectedCourseId == 0)
                 {
-                    if (_selectedCourseId == 0)
+                    var newCourse = new Cours
                     {
-                        var newCourse = new Cours
-                        {
-                            Code = _txtCode.Text.Trim(),
-                            Title = _txtTitle.Text.Trim(),
-                            LectureHours = lectureHours,
-                            PracticalHours = practicalHours,
-                            IsPractical = _chkIsPractical.Checked
-                        };
-                        ctx.Courses.Add(newCourse);
-                    }
-                    else
-                    {
-                        var existing = await ctx.Courses.FindAsync(_selectedCourseId);
-                        if (existing != null)
-                        {
-                            existing.Code = _txtCode.Text.Trim();
-                            existing.Title = _txtTitle.Text.Trim();
-                            existing.LectureHours = lectureHours;
-                            existing.PracticalHours = practicalHours;
-                            existing.IsPractical = _chkIsPractical.Checked;
-                            ctx.Entry(existing).State = EntityState.Modified;
-                        }
-                    }
-                    await ctx.SaveChangesAsync();
+                        Code = _txtCode.Text.Trim(),
+                        Title = _txtTitle.Text.Trim(),
+                        LectureHours = lectureHours,
+                        PracticalHours = practicalHours,
+                        IsPractical = _chkIsPractical.Checked
+                    };
+                    _db.Courses.Add(newCourse);
+
                 }
+                else
+                {
+                    var existing = await _db.Courses.FindAsync(_selectedCourseId);
+                    if (existing != null)
+                    {
+                        existing.Code = _txtCode.Text.Trim();
+                        existing.Title = _txtTitle.Text.Trim();
+                        existing.LectureHours = lectureHours;
+                        existing.PracticalHours = practicalHours;
+                        existing.IsPractical = _chkIsPractical.Checked;
+                        _db.Entry(existing).State = EntityState.Modified;
+                    }
+                }
+                await _db.SaveChangesAsync();
                 await LoadDataAsync();
                 ClearForm();
             }
@@ -115,15 +127,14 @@ namespace SchedualApp
 
             try
             {
-                using (var ctx = new SchedualAppModel())
+
+                var toDelete = await _db.Courses.FindAsync(_selectedCourseId);
+                if (toDelete != null)
                 {
-                    var toDelete = await ctx.Courses.FindAsync(_selectedCourseId);
-                    if (toDelete != null)
-                    {
-                        ctx.Courses.Remove(toDelete);
-                        await ctx.SaveChangesAsync();
-                    }
+                    _db.Courses.Remove(toDelete);
+                    await _db.SaveChangesAsync();
                 }
+
                 await LoadDataAsync();
                 ClearForm();
             }
@@ -181,6 +192,11 @@ namespace SchedualApp
             int.TryParse(_txtLectureHours.Text, out lectureHours);
             int.TryParse(_txtPracticalHours.Text, out practicalHours);
             return true;
+        }
+
+        private void _formLayout_Paint(object sender, PaintEventArgs e)
+        {
+
         }
     }
 }

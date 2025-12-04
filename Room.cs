@@ -11,7 +11,7 @@ namespace SchedualApp
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
         public Room()
         {
-            RoomFeatures = new HashSet<RoomFeature>();
+            
             ScheduleSlots = new HashSet<ScheduleSlot>();
         }
 
@@ -28,7 +28,7 @@ namespace SchedualApp
         public string RoomType { get; set; }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<RoomFeature> RoomFeatures { get; set; }
+        
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<ScheduleSlot> ScheduleSlots { get; set; }

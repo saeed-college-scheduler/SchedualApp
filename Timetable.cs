@@ -19,19 +19,10 @@ namespace SchedualApp
         [StringLength(100)]
         public string TimetableName { get; set; }
 
-
         public int DepartmentID { get; set; }
 
         public int LevelID { get; set; }
-
-        [Required]
-        [StringLength(50)]
-        public string Semester { get; set; }
-
         public DateTime CreationDate { get; set; }
-
-        public bool IsApproved { get; set; }
-
         public virtual Department Department { get; set; }
 
         public virtual Level Level { get; set; }

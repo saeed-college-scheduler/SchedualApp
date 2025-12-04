@@ -14,7 +14,6 @@
         }
 
         #region Component Designer generated code
-
         private void InitializeComponent()
         {
             this._mainLayout = new System.Windows.Forms.TableLayoutPanel();
@@ -114,6 +113,7 @@
             this._formLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this._formLayout.Size = new System.Drawing.Size(360, 634);
             this._formLayout.TabIndex = 0;
+            this._formLayout.Paint += new System.Windows.Forms.PaintEventHandler(this._formLayout_Paint);
             // 
             // lblCode
             // 
@@ -222,7 +222,7 @@
             this._buttonsPanel.Location = new System.Drawing.Point(14, 174);
             this._buttonsPanel.Name = "_buttonsPanel";
             this._buttonsPanel.Size = new System.Drawing.Size(332, 37);
-            this._buttonsPanel.TabIndex = 5;
+            this._buttonsPanel.TabIndex = 10;
             // 
             // _btnDelete
             // 
@@ -275,7 +275,6 @@
             this.ResumeLayout(false);
 
         }
-
         #endregion
 
         private System.Windows.Forms.TableLayoutPanel _mainLayout;

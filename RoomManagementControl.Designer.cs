@@ -92,6 +92,7 @@
             this.panelForm.Name = "panelForm";
             this.panelForm.Size = new System.Drawing.Size(314, 594);
             this.panelForm.TabIndex = 1;
+            this.panelForm.Paint += new System.Windows.Forms.PaintEventHandler(this.panelForm_Paint);
             // 
             // cmbRoomType
             // 

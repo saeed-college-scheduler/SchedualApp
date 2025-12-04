@@ -16,11 +16,11 @@ namespace SchedualApp
         public virtual DbSet<CourseLevel> CourseLevels { get; set; }
         public virtual DbSet<Cours> Courses { get; set; }
         public virtual DbSet<Department> Departments { get; set; }
-        public virtual DbSet<Feature> Features { get; set; }
+        
         public virtual DbSet<LecturerAvailability> LecturerAvailabilities { get; set; }
         public virtual DbSet<Lecturer> Lecturers { get; set; }
         public virtual DbSet<Level> Levels { get; set; }
-        public virtual DbSet<RoomFeature> RoomFeatures { get; set; }
+        
         public virtual DbSet<Room> Rooms { get; set; }
         public virtual DbSet<ScheduleSlot> ScheduleSlots { get; set; }
         //public DbSet<TimeSlot> TimeSlots { get; set; }
@@ -54,10 +54,6 @@ namespace SchedualApp
                 .WithRequired(e => e.Department)
                 .WillCascadeOnDelete(false);
 
-            modelBuilder.Entity<Feature>()
-                .HasMany(e => e.RoomFeatures)
-                .WithRequired(e => e.Feature)
-                .WillCascadeOnDelete(false);
 
             modelBuilder.Entity<Lecturer>()
                 .HasMany(e => e.CourseLecturers)
@@ -84,10 +80,6 @@ namespace SchedualApp
                 .WithRequired(e => e.Level)
                 .WillCascadeOnDelete(false);
 
-            modelBuilder.Entity<Room>()
-                .HasMany(e => e.RoomFeatures)
-                .WithRequired(e => e.Room)
-                .WillCascadeOnDelete(false);
 
             modelBuilder.Entity<Room>()
                 .HasMany(e => e.ScheduleSlots)

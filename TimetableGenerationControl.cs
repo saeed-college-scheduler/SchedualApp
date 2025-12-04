@@ -1,5 +1,9 @@
-﻿using DocumentFormat.OpenXml.Drawing;
-using GeneticSharp.Domain;
+﻿using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Drawing;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Spreadsheet;
+using Excel = DocumentFormat.OpenXml.Spreadsheet; // هذا هو الحل السحري
+//using GeneticSharp.Domain;
 using GeneticSharp.Domain.Crossovers;
 using GeneticSharp.Domain.Mutations;
 using GeneticSharp.Domain.Populations;
@@ -56,18 +60,36 @@ namespace SchedualApp
             cboLevel.ValueMember = "LevelID";
         }
 
+        //private async Task LoadArchivedTimetablesAsync()
+        //{
+        //    var timetables = await _context.Timetables.AsNoTracking().ToListAsync();
+        //    // تم تصحيح استخدام TimetableName
+        //    var archiveItems = timetables.Select(t => new TimetableArchiveItem { TimetableID = t.TimetableID, Name = t.TimetableName }).ToList();
+
+        //    // ربط قائمة الجداول المحفوظة
+        //    lstArchivedTimetables.DataSource = archiveItems;
+        //    lstArchivedTimetables.DisplayMember = "Name";
+        //    lstArchivedTimetables.ValueMember = "TimetableID";
+        //}
         private async Task LoadArchivedTimetablesAsync()
         {
             var timetables = await _context.Timetables.AsNoTracking().ToListAsync();
-            // تم تصحيح استخدام TimetableName
             var archiveItems = timetables.Select(t => new TimetableArchiveItem { TimetableID = t.TimetableID, Name = t.TimetableName }).ToList();
 
-            // ربط قائمة الجداول المحفوظة
+            // 1. أوقف حدث التغيير مؤقتاً لمنع تشغيل كود العرض
+            lstArchivedTimetables.SelectedIndexChanged -= lstArchivedTimetables_SelectedIndexChanged;
+
+            // 2. اربط البيانات
             lstArchivedTimetables.DataSource = archiveItems;
             lstArchivedTimetables.DisplayMember = "Name";
             lstArchivedTimetables.ValueMember = "TimetableID";
-        }
 
+            // 3. إلغاء تحديد أي عنصر (لكي لا يظهر أي جدول)
+            lstArchivedTimetables.SelectedIndex = -1;
+
+            // 4. أعد تفعيل الحدث مرة أخرى ليتمكن المستخدم من الاختيار لاحقاً
+            lstArchivedTimetables.SelectedIndexChanged += lstArchivedTimetables_SelectedIndexChanged;
+        }
         private async void btnGenerate_Click(object sender, EventArgs e)
         {
             if (cboDepartment.SelectedValue == null || cboLevel.SelectedValue == null || string.IsNullOrWhiteSpace(txtTimetableName.Text))
@@ -86,8 +108,9 @@ namespace SchedualApp
 
             if (!_dataManager.RequiredSlots.Any())
             {
-                lblStatus.Text = "لا توجد مقررات/حصص مطلوبة للجدولة لهذا القسم والمستوى.";
-                lblStatus.ForeColor = Color.Red;
+                MessageBox.Show("لا توجد مقررات/محاضرين مطلوبة للجدولة لهذا القسم والترم.", "خطأ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+
                 return;
             }
 
@@ -123,7 +146,7 @@ namespace SchedualApp
 
             // 3. تشغيل الخوارزمية بشكل غير متزامن
             lblStatus.Text = "جاري توليد الجدول الزمني... يرجى الانتظار.";
-            progressBar.Maximum = 500; // عدد الأجيال الأقصى
+            progressBar.Maximum = 250; // عدد الأجيال الأقصى
             progressBar.Value = 0;
             btnGenerate.Enabled = false;
 
@@ -133,46 +156,25 @@ namespace SchedualApp
 
             // 4. عرض النتائج وحفظها
             var bestTimetable = (TimetableChromosome)ga.BestChromosome;
-            DisplaySchedule(bestTimetable);
+            //DisplayArchivedSchedule((Timetable)ga.BestChromosome);
 
             if (bestTimetable.Fitness.Value > 900000) // افتراض أن 900000 تعني جدولاً جيداً جداً
             {
                 lblStatus.Text = $"تم إنشاء الجدول بنجاح. اللياقة: {bestTimetable.Fitness.Value:N2}";
-                lblStatus.ForeColor = Color.Green;
+                lblStatus.ForeColor = System.Drawing.Color.Green;
                 await SaveTimetableAsync(bestTimetable, timetableName, departmentId, levelId);
             }
             else
             {
                 lblStatus.Text = $"تم إنشاء الجدول، لكنه يحتوي على تعارضات. اللياقة: {bestTimetable.Fitness.Value:N2}";
-                lblStatus.ForeColor = Color.Orange;
+                lblStatus.ForeColor = System.Drawing.Color.Orange;
             }
         }
 
         private async Task SaveTimetableAsync(TimetableChromosome timetable, string name, int departmentId, int levelId)
         {
-            // Implementation needed: Save Timetable and its ScheduleSlots to DB
-            // This action CONSUMES the resources (Lecturers/Rooms) globally.
-
-            // مثال على الحفظ (يجب استبداله بمنطق Entity Framework الفعلي)
-
-            //var newTimetable = new Timetable
-            //{
-            //    TimetableName = name,
-            //    DepartmentID = departmentId,
-            //    LevelID = levelId,
-            //    Semester="السادس",
-            //    CreationDate = DateTime.Now,
-            //    IsApproved = true,
-            //    ScheduleSlots = timetable.GenesList.Select(s => new ScheduleSlot
-            //    {
-            //        CourseID = s.CourseID,
-            //        LecturerID = s.LecturerID,
-            //        DayOfWeek = s.DayOfWeek,
-            //        TimeSlotDefinitionID = s.TimeSlotDefinitionID,
-            //        RoomID = s.RoomID
-            //    }).ToList()
-            //};
-            // ... (داخل SaveTimetableAsync)
+                // Implementation needed: Save Timetable and its ScheduleSlots to DB
+                // This action CONSUMES the resources (Lecturers/Rooms) globally.
             var newTimetable = new Timetable
             {
                 TimetableName = name,
@@ -181,10 +183,9 @@ namespace SchedualApp
 
                 // تأكد من تعيين قيمة لـ Semester
                 // استخدم القيمة الثابتة "الترم السادس" مؤقتاً أو قم بتمريرها من واجهة المستخدم
-                Semester = "الترم السادس",
+                //Semester = "الترم السادس",
 
                 CreationDate = DateTime.Now,
-                IsApproved = false,
                 ScheduleSlots = timetable.GenesList.Select(s => new ScheduleSlot
                 {
                     CourseID = s.CourseID,
@@ -203,6 +204,7 @@ namespace SchedualApp
 
             _context.Timetables.Add(newTimetable);
             await _context.SaveChangesAsync();
+            await DisplayArchivedSchedule(newTimetable);
             
 
             await LoadArchivedTimetablesAsync();
@@ -223,7 +225,7 @@ namespace SchedualApp
 
                     lblStatus.Text = $"تم حذف الجدول رقم {timetableId}. جاري تحديث القائمة...";
                     // مثال على الحذف (يجب استبداله بمنطق Entity Framework الفعلي)
-                    /*
+                 
                     var timetableToDelete = await _context.Timetables.Include(t => t.ScheduleSlots).FirstOrDefaultAsync(t => t.TimetableID == timetableId);
                     if (timetableToDelete != null)
                     {
@@ -231,145 +233,264 @@ namespace SchedualApp
                         _context.Timetables.Remove(timetableToDelete);
                         await _context.SaveChangesAsync();
                     }
-                    */
+                  
 
                     await LoadArchivedTimetablesAsync();
                     MessageBox.Show("تم حذف الجدول بنجاح.", "نجاح", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
         }
-
-        //private void DisplaySchedule(TimetableChromosome timetable)
-        //{
-        //    // تحويل الكروموسوم إلى DataTable للعرض في DataGridView
-        //    var dt = new DataTable();
-        //    dt.Columns.Add("اليوم");
-        //    dt.Columns.Add("الوقت");
-        //    dt.Columns.Add("المقرر");
-        //    dt.Columns.Add("المحاضر");
-        //    dt.Columns.Add("القاعة");
-
-        //    var sortedSlots = timetable.GenesList.OrderBy(s => s.DayOfWeek).ThenBy(s => s.TimeSlotDefinitionID);
-
-        //    foreach (var slot in sortedSlots)
-        //    {
-        //        var course = _dataManager.GetCourse(slot.CourseID);
-        //        var lecturer = _context.Lecturers.FirstOrDefault(l => l.LecturerID == slot.LecturerID);
-        //        var room = _dataManager.GetRoom(slot.RoomID);
-        //        var timeSlot = _dataManager.TimeSlotDefinitions.FirstOrDefault(ts => ts.TimeSlotDefinitionID == slot.TimeSlotDefinitionID);
-
-        //        dt.Rows.Add(
-        //            ((DayOfWeek)(slot.DayOfWeek - 1)).ToString(),
-        //            timeSlot?.StartTime.ToString(@"hh\:mm") + " - " + timeSlot?.EndTime.ToString(@"hh\:mm"),
-        //            course?.Title,
-        //            $"{lecturer?.FirstName} {lecturer?.LastName}",
-        //            room?.Name
-        //        );
-        //    }
-
-        //    dgvTimetable.DataSource = dt;
-        //    dgvTimetable.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
-        //}
-
-        private void DisplaySchedule(TimetableChromosome timetable)
+        private async void lstArchivedTimetables_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // 1. الحصول على جميع الفترات الزمنية المتاحة (الأعمدة)
-            var timeSlots = _dataManager.TimeSlotDefinitions.OrderBy(ts => ts.SlotNumber).ToList();
+            // التأكد من أن المستخدم اختار عنصراً
+            if (lstArchivedTimetables.SelectedItem == null) return;
 
-            // 2. تحديد الأيام (الصفوف) - نستخدم الترتيب المخصص الذي ناقشناه سابقاً
+            // 1. التحويل الصحيح إلى النوع الموجود فعلياً في القائمة
+            var selectedItem = lstArchivedTimetables.SelectedItem as TimetableArchiveItem;
+
+            if (selectedItem != null)
+            {
+                try
+                {
+                    lblStatus.Text = "جاري تحميل الجدول...";
+
+                    // 2. جلب الجدول الكامل من قاعدة البيانات باستخدام الـ ID
+                    var savedTimetable = await _context.Timetables
+                                                .Include(t => t.ScheduleSlots) // ضروري لجلب الحصص
+                                                .AsNoTracking()
+                                                .FirstOrDefaultAsync(t => t.TimetableID == selectedItem.TimetableID);
+
+                    if (savedTimetable != null)
+                    {
+                        // 3. تحديث DataManager ليعرف أسماء المواد والقاعات الخاصة بهذا القسم والمستوى
+                        _dataManager = new DataManager(_context);
+                        await _dataManager.LoadDataAsync(savedTimetable.DepartmentID, savedTimetable.LevelID);
+
+                        // 4. استدعاء دالة العرض الجديدة (انظر الخطوة 2)
+                        await DisplayArchivedSchedule(savedTimetable);
+
+                        lblStatus.Text = $"تم عرض الجدول: {savedTimetable.TimetableName}";
+                        lblStatus.ForeColor = System.Drawing.Color.Blue;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("حدث خطأ أثناء تحميل الجدول: " + ex.Message);
+                }
+            }
+        }
+        private async Task DisplayArchivedSchedule(Timetable dbTimetable)
+        {
+            // 1. إعداد الأعمدة (الوقت)
+            var timeSlots = await _context.TimeSlotDefinitions.AsNoTracking().OrderBy(ts => ts.SlotNumber).ToListAsync();
+
+            // 2. إعداد الصفوف (الأيام)
             var customDayOrder = new System.DayOfWeek[]
             {
-        System.DayOfWeek.Saturday,
-        System.DayOfWeek.Sunday,
-        System.DayOfWeek.Monday,
-        System.DayOfWeek.Tuesday,
-        System.DayOfWeek.Wednesday,
-        System.DayOfWeek.Thursday
-                // تم استثناء الجمعة
+        System.DayOfWeek.Saturday, System.DayOfWeek.Sunday, System.DayOfWeek.Monday,
+        System.DayOfWeek.Tuesday, System.DayOfWeek.Wednesday, System.DayOfWeek.Thursday
             };
 
-            // 3. إنشاء DataTable بالهيكل الجديد (اليوم + الفترات الزمنية)
+            // 3. تجهيز الجدول للبيانات
             var dt = new DataTable();
-            dt.Columns.Add("اليوم"); // العمود الأول: اليوم
-
-            // إضافة أعمدة الفترات الزمنية
+            dt.Columns.Add("اليوم");
             foreach (var slot in timeSlots)
             {
                 dt.Columns.Add($"{slot.StartTime.ToString(@"hh\:mm")} - {slot.EndTime.ToString(@"hh\:mm")}");
             }
 
             // 4. تعبئة البيانات
-            var slotsByDayAndTime = timetable.GenesList
-                .GroupBy(s => new { Day = s.DayOfWeek, TimeSlot = s.TimeSlotDefinitionID })
-                .ToDictionary(g => g.Key, g => g.ToList());
-
             foreach (var day in customDayOrder)
             {
-                // إنشاء صف جديد يبدأ باسم اليوم
                 var row = dt.NewRow();
                 row["اليوم"] = day.ToString();
 
-                // تعبئة خلايا الصف بناءً على الفترات الزمنية
                 for (int i = 0; i < timeSlots.Count; i++)
                 {
                     var timeSlot = timeSlots[i];
+                    string colName = $"{timeSlot.StartTime.ToString(@"hh\:mm")} - {timeSlot.EndTime.ToString(@"hh\:mm")}";
 
-                    // البحث عن ScheduleSlot المطابق لليوم والفترة
-                    var key = new { Day = (int)day, TimeSlot = timeSlot.TimeSlotDefinitionID };
+                    // البحث عن الحصة في البيانات القادمة من قاعدة البيانات
+                    // ملاحظة: تأكد من طريقة تخزين DayOfWeek في الداتابيس (هل يبدأ من 0 أم 1؟)
+                    // الكود هنا يفترض التوافق المباشر
+                    var slotsInCell = dbTimetable.ScheduleSlots
+                        .Where(s => s.DayOfWeek == (int)day && s.TimeSlotDefinitionID == timeSlot.TimeSlotDefinitionID)
+                        .ToList();
 
-                    // يجب أن نستخدم DayOfWeek كـ int في المفتاح
-                    // ملاحظة: إذا كان DayOfWeek في ScheduleSlot يبدأ من 1 (الأحد) بدلاً من 0 (الأحد)، يجب تعديل المفتاح
-                    // بناءً على الكود السابق (slot.DayOfWeek - 1) في السطر 231، نفترض أن s.DayOfWeek هو int يبدأ من 1
-                    var adjustedKey = new { Day = (int)day + 1, TimeSlot = timeSlot.TimeSlotDefinitionID };
-
-                    if (slotsByDayAndTime.ContainsKey(adjustedKey))
+                    if (slotsInCell.Any())
                     {
-                        var scheduleSlots = slotsByDayAndTime[adjustedKey];
-
-                        // تجميع بيانات SchedualSlot في متغير سترنج واحد
                         var cellContent = new System.Text.StringBuilder();
-                        foreach (var slotData in scheduleSlots)
+                        foreach (var slot in slotsInCell)
                         {
-                            var course = _dataManager.GetCourse(slotData.CourseID);
-                            var lecturer = _context.Lecturers.FirstOrDefault(l => l.LecturerID == slotData.LecturerID);
-                            var room = _dataManager.GetRoom(slotData.RoomID);
+                            var course = _dataManager.GetCourse(slot.CourseID);
+                            var lecturer = _context.Lecturers.Find(slot.LecturerID);
+                            var room = _dataManager.GetRoom(slot.RoomID);
 
-                            cellContent.AppendLine($"{course?.Title} ({slotData.SlotType})");
-                            cellContent.AppendLine($"المحاضر: {lecturer?.FirstName} {lecturer?.LastName}");
-                            cellContent.AppendLine($"القاعة: {room?.Name}");
-                            cellContent.AppendLine("---");
+                            cellContent.AppendLine($"{course?.Title ?? "مادة"} ({slot.SlotType})");
+                            cellContent.AppendLine($"{lecturer?.FirstName} {lecturer?.LastName}");
+                            cellContent.AppendLine($"قاعة: {room?.Name}");
+                            cellContent.AppendLine("-");
                         }
+                        // حذف آخر شرطة
+                        if (cellContent.Length > 0) cellContent.Length -= 3;
 
-                        // إزالة آخر "---"
-                        if (cellContent.Length > 0)
-                        {
-                            cellContent.Length -= 4;
-                        }
-
-                        row[timeSlot.StartTime.ToString(@"hh\:mm") + " - " + timeSlot.EndTime.ToString(@"hh\:mm")] = cellContent.ToString();
+                        row[colName] = cellContent.ToString();
                     }
                     else
                     {
-                        row[timeSlot.StartTime.ToString(@"hh\:mm") + " - " + timeSlot.EndTime.ToString(@"hh\:mm")] = string.Empty;
+                        row[colName] = "";
                     }
                 }
-
                 dt.Rows.Add(row);
             }
 
+            // عرض الجدول
             dgvTimetable.DataSource = dt;
             dgvTimetable.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
         }
-
 
         private void dgvTimetable_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
 
         }
 
-        //private void btnGenerate_Click(object sender, EventArgs e)
-        //{
+        private void progressBar_Click(object sender, EventArgs e)
+        {
 
-        //}
+        }
+        private void CreateExcelFile(string filePath)
+        {
+            using (SpreadsheetDocument package = SpreadsheetDocument.Create(filePath, SpreadsheetDocumentType.Workbook))
+            {
+                // 1. إنشاء الهيكل الأساسي
+                WorkbookPart workbookPart = package.AddWorkbookPart();
+                workbookPart.Workbook = new Excel.Workbook();
+
+                WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
+                worksheetPart.Worksheet = new Excel.Worksheet(new Excel.SheetData());
+
+                // 2. إضافة الأنماط
+                WorkbookStylesPart stylesPart = workbookPart.AddNewPart<WorkbookStylesPart>();
+                stylesPart.Stylesheet = GenerateStyleSheet();
+                stylesPart.Stylesheet.Save();
+
+                Excel.Sheets sheets = package.WorkbookPart.Workbook.AppendChild(new Excel.Sheets());
+                Excel.Sheet sheet = new Excel.Sheet()
+                {
+                    Id = package.WorkbookPart.GetIdOfPart(worksheetPart),
+                    SheetId = 1,
+                    Name = "الجدول الدراسي"
+                };
+                sheets.Append(sheet);
+
+                Excel.SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<Excel.SheetData>();
+
+                // 3. إضافة العناوين
+                Excel.Row headerRow = new Excel.Row();
+                foreach (DataGridViewColumn column in dgvTimetable.Columns)
+                {
+                    Excel.Cell cell = new Excel.Cell();
+                    cell.DataType = CellValues.String;
+                    cell.CellValue = new Excel.CellValue(column.HeaderText);
+                    headerRow.AppendChild(cell);
+                }
+                sheetData.AppendChild(headerRow);
+
+                // 4. إضافة البيانات
+                foreach (DataGridViewRow dgvRow in dgvTimetable.Rows)
+                {
+                    if (!dgvRow.IsNewRow)
+                    {
+                        Excel.Row newRow = new Excel.Row();
+                        foreach (DataGridViewCell dgvCell in dgvRow.Cells)
+                        {
+                            Excel.Cell cell = new Excel.Cell();
+                            cell.DataType = CellValues.String;
+
+                            string cellText = dgvCell.Value != null ? dgvCell.Value.ToString() : "";
+                            cell.CellValue = new Excel.CellValue(cellText);
+
+                            // تفعيل التفاف النص للأسطر المتعددة
+                            if (cellText.Contains("\n") || cellText.Contains("\r"))
+                            {
+                                cell.StyleIndex = 1;
+                            }
+
+                            newRow.AppendChild(cell);
+                        }
+                        sheetData.AppendChild(newRow);
+                    }
+                }
+                workbookPart.Workbook.Save();
+            }
+        }
+
+        // دالة الأنماط المصححة باستخدام الاسم المستعار Excel
+        private Excel.Stylesheet GenerateStyleSheet()
+        {
+            return new Excel.Stylesheet(
+                new Excel.Fonts(
+                    new Excel.Font( // Index 0 - Default
+                        new Excel.FontSize() { Val = 11 },
+                        new Excel.Color() { Rgb = new HexBinaryValue() { Value = "000000" } },
+                        new Excel.FontName() { Val = "Calibri" })
+                ),
+                new Excel.Fills(
+                    new Excel.Fill(new Excel.PatternFill() { PatternType = Excel.PatternValues.None }), // Index 0
+                    new Excel.Fill(new Excel.PatternFill() { PatternType = Excel.PatternValues.Gray125 }) // Index 1
+                ),
+                new Excel.Borders(
+                    new Excel.Border( // Index 0
+                        new Excel.LeftBorder(),
+                        new Excel.RightBorder(),
+                        new Excel.TopBorder(),
+                        new Excel.BottomBorder(),
+                        new Excel.DiagonalBorder())
+                ),
+                new Excel.CellFormats(
+                    new Excel.CellFormat() { FontId = 0, FillId = 0, BorderId = 0 }, // Index 0
+                    new Excel.CellFormat() // Index 1 - Wrap Text
+                    {
+                        FontId = 0,
+                        FillId = 0,
+                        BorderId = 0,
+                        ApplyAlignment = true,
+                        Alignment = new Excel.Alignment() { WrapText = true, Vertical = Excel.VerticalAlignmentValues.Center }
+                    }
+                )
+            );
+        }
+        private void btnExportExcel_Click(object sender, EventArgs e)
+        {
+            // التأكد من وجود بيانات
+            if (dgvTimetable.Rows.Count == 0)
+            {
+                MessageBox.Show("لا توجد بيانات لتصديرها.", "تنبيه", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            SaveFileDialog sfd = new SaveFileDialog();
+            sfd.Filter = "Excel Files (*.xlsx)|*.xlsx";
+            sfd.FileName = "الجدول الدراسي.xlsx";
+            sfd.Title = "حفظ الجدول كملف إكسل";
+
+            if (sfd.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    CreateExcelFile(sfd.FileName);
+                    MessageBox.Show("تم حفظ ملف الإكسل بنجاح!", "نجاح", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (System.IO.IOException)
+                {
+                    MessageBox.Show("الملف مفتوح حالياً في برنامج Excel.\nالرجاء إغلاق الملف ثم المحاولة مرة أخرى.",
+                                    "خطأ في الحفظ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("حدث خطأ غير متوقع: " + ex.Message, "خطأ", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
     }
 }

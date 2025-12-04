@@ -15,7 +15,7 @@ namespace SchedualApp
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // عند تحميل النافذة، قم بتحميل واجهة المقررات كواجهة افتراضية
-            LoadWinFormsControl(new CoursManagementControl(), "Courses");
+            LoadWinFormsControl(new CoursManagementControl(), "Cours");
         }
 
         // دالة مساعدة لتبديل الـ UserControl وتحديث حالة الأزرار
@@ -86,18 +86,6 @@ namespace SchedualApp
         private void CourseLevelButton_Click(object sender, RoutedEventArgs e)
         {
             LoadWinFormsControl(new CourseLevelManagementControl(), "CourseLevel");
-        }
-
-        //private void CourseLecturerButton_Click(object sender, RoutedEventArgs e)
-        //{
-        //    LoadWinFormsControl(new CourseLecturerManagementControl(), "CourseLecturer");
-        //}
-
-        private void ViewerButton_Click(object sender, RoutedEventArgs e)
-        {
-            // سنقوم بتصميم TimetableViewerControl في المرحلة القادمة
-            MessageBox.Show("Timetable Viewer UI is not yet implemented.", "Coming Soon");
-            // LoadWinFormsControl(new TimetableViewerControl(), "Viewer");
         }
 
         private void winFormsHost_ChildChanged(object sender, ChildChangedEventArgs e)

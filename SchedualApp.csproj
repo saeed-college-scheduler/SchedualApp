@@ -156,6 +156,18 @@
     <Compile Include="Migrations\202511302335125_CreateDataBase.Designer.cs">
       <DependentUpon>202511302335125_CreateDataBase.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202512041759566_RemoveSemesterFromTimeTable.cs" />
+    <Compile Include="Migrations\202512041759566_RemoveSemesterFromTimeTable.Designer.cs">
+      <DependentUpon>202512041759566_RemoveSemesterFromTimeTable.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202512041833479_RemoveIsApprovedFromTimeTable.cs" />
+    <Compile Include="Migrations\202512041833479_RemoveIsApprovedFromTimeTable.Designer.cs">
+      <DependentUpon>202512041833479_RemoveIsApprovedFromTimeTable.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202512041842394_DropFeatureAndRoomFeature.cs" />
+    <Compile Include="Migrations\202512041842394_DropFeatureAndRoomFeature.Designer.cs">
+      <DependentUpon>202512041842394_DropFeatureAndRoomFeature.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Room.cs" />
@@ -251,6 +263,15 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202511302335125_CreateDataBase.resx">
       <DependentUpon>202511302335125_CreateDataBase.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202512041759566_RemoveSemesterFromTimeTable.resx">
+      <DependentUpon>202512041759566_RemoveSemesterFromTimeTable.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202512041833479_RemoveIsApprovedFromTimeTable.resx">
+      <DependentUpon>202512041833479_RemoveIsApprovedFromTimeTable.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202512041842394_DropFeatureAndRoomFeature.resx">
+      <DependentUpon>202512041842394_DropFeatureAndRoomFeature.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

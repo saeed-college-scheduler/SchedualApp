@@ -44,6 +44,7 @@
             this.cboDepartment = new System.Windows.Forms.ComboBox();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
+            this.btnExportExcel = new System.Windows.Forms.Button();
             this.tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvTimetable)).BeginInit();
             this.panelControls.SuspendLayout();
@@ -82,6 +83,7 @@
             // 
             // panelControls
             // 
+            this.panelControls.Controls.Add(this.btnExportExcel);
             this.panelControls.Controls.Add(this.btnDelete);
             this.panelControls.Controls.Add(this.lstArchivedTimetables);
             this.panelControls.Controls.Add(this.label5);
@@ -123,6 +125,7 @@
             this.lstArchivedTimetables.Name = "lstArchivedTimetables";
             this.lstArchivedTimetables.Size = new System.Drawing.Size(367, 196);
             this.lstArchivedTimetables.TabIndex = 11;
+            this.lstArchivedTimetables.SelectedIndexChanged += new System.EventHandler(this.lstArchivedTimetables_SelectedIndexChanged);
             // 
             // label5
             // 
@@ -137,11 +140,12 @@
             // 
             // progressBar
             // 
-            this.progressBar.Location = new System.Drawing.Point(12, 183);
+            this.progressBar.Location = new System.Drawing.Point(12, 182);
             this.progressBar.Margin = new System.Windows.Forms.Padding(4);
             this.progressBar.Name = "progressBar";
             this.progressBar.Size = new System.Drawing.Size(368, 12);
             this.progressBar.TabIndex = 9;
+            this.progressBar.Click += new System.EventHandler(this.progressBar_Click);
             // 
             // lblStatus
             // 
@@ -231,6 +235,16 @@
             this.label1.TabIndex = 0;
             this.label1.Text = "لوحة الإنشاء";
             // 
+            // btnExportExcel
+            // 
+            this.btnExportExcel.Location = new System.Drawing.Point(287, 469);
+            this.btnExportExcel.Name = "btnExportExcel";
+            this.btnExportExcel.Size = new System.Drawing.Size(75, 23);
+            this.btnExportExcel.TabIndex = 13;
+            this.btnExportExcel.Text = "تحميل";
+            this.btnExportExcel.UseVisualStyleBackColor = true;
+            this.btnExportExcel.Click += new System.EventHandler(this.btnExportExcel_Click);
+            // 
             // TimetableGenerationControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -265,5 +279,6 @@
         private System.Windows.Forms.ListBox lstArchivedTimetables;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Button btnDelete;
+        private System.Windows.Forms.Button btnExportExcel;
     }
 }
