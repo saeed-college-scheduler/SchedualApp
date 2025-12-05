@@ -100,7 +100,7 @@
             this.cmbRoomType.FormattingEnabled = true;
             this.cmbRoomType.Items.AddRange(new object[] {
             "Lecture",
-            "Lab"});
+            "Practical"});
             this.cmbRoomType.Location = new System.Drawing.Point(120, 55);
             this.cmbRoomType.Name = "cmbRoomType";
             this.cmbRoomType.Size = new System.Drawing.Size(175, 24);

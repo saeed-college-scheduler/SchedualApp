@@ -279,19 +279,91 @@ namespace SchedualApp
                 }
             }
         }
+        //private async Task DisplayArchivedSchedule(Timetable dbTimetable)
+        //{
+        //    // 1. إعداد الأعمدة (الوقت)
+        //    var timeSlots = await _context.TimeSlotDefinitions.AsNoTracking().OrderBy(ts => ts.SlotNumber).ToListAsync();
+
+        //    // 2. إعداد الصفوف (الأيام)
+        //    var customDayOrder = new System.DayOfWeek[]
+        //    {
+        //System.DayOfWeek.Saturday, System.DayOfWeek.Sunday, System.DayOfWeek.Monday,
+        //System.DayOfWeek.Tuesday, System.DayOfWeek.Wednesday, System.DayOfWeek.Thursday
+        //    };
+
+        //    // 3. تجهيز الجدول للبيانات
+        //    var dt = new DataTable();
+        //    dt.Columns.Add("اليوم");
+        //    foreach (var slot in timeSlots)
+        //    {
+        //        dt.Columns.Add($"{slot.StartTime.ToString(@"hh\:mm")} - {slot.EndTime.ToString(@"hh\:mm")}");
+        //    }
+
+        //    // 4. تعبئة البيانات
+        //    foreach (var day in customDayOrder)
+        //    {
+        //        var row = dt.NewRow();
+        //        row["اليوم"] = day.ToString();
+
+        //        for (int i = 0; i < timeSlots.Count; i++)
+        //        {
+        //            var timeSlot = timeSlots[i];
+        //            string colName = $"{timeSlot.StartTime.ToString(@"hh\:mm")} - {timeSlot.EndTime.ToString(@"hh\:mm")}";
+
+        //            // البحث عن الحصة في البيانات القادمة من قاعدة البيانات
+        //            // ملاحظة: تأكد من طريقة تخزين DayOfWeek في الداتابيس (هل يبدأ من 0 أم 1؟)
+        //            // الكود هنا يفترض التوافق المباشر
+        //            var slotsInCell = dbTimetable.ScheduleSlots
+        //                .Where(s => s.DayOfWeek == (int)day && s.TimeSlotDefinitionID == timeSlot.TimeSlotDefinitionID)
+        //                .ToList();
+
+        //            if (slotsInCell.Any())
+        //            {
+        //                var cellContent = new System.Text.StringBuilder();
+        //                foreach (var slot in slotsInCell)
+        //                {
+        //                    var course = _dataManager.GetCourse(slot.CourseID);
+        //                    var lecturer = _context.Lecturers.Find(slot.LecturerID);
+        //                    var room = _dataManager.GetRoom(slot.RoomID);
+
+        //                    cellContent.AppendLine($"{course?.Title ?? "مادة"} ({slot.SlotType})");
+        //                    cellContent.AppendLine($"{lecturer?.FirstName} {lecturer?.LastName}");
+        //                    cellContent.AppendLine($"قاعة: {room?.Name}");
+        //                    cellContent.AppendLine("-");
+        //                }
+        //                // حذف آخر شرطة
+        //                if (cellContent.Length > 0) cellContent.Length -= 3;
+
+        //                row[colName] = cellContent.ToString();
+        //            }
+        //            else
+        //            {
+        //                row[colName] = "";
+        //            }
+        //        }
+        //        dt.Rows.Add(row);
+        //    }
+
+        //    // عرض الجدول
+        //    dgvTimetable.DataSource = dt;
+        //    dgvTimetable.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
+        //}
         private async Task DisplayArchivedSchedule(Timetable dbTimetable)
         {
-            // 1. إعداد الأعمدة (الوقت)
+            // 1. إعداد الأعمدة
             var timeSlots = await _context.TimeSlotDefinitions.AsNoTracking().OrderBy(ts => ts.SlotNumber).ToListAsync();
 
-            // 2. إعداد الصفوف (الأيام)
+            // 2. إعداد الصفوف (ترتيب العرض الذي تريده)
             var customDayOrder = new System.DayOfWeek[]
             {
-        System.DayOfWeek.Saturday, System.DayOfWeek.Sunday, System.DayOfWeek.Monday,
-        System.DayOfWeek.Tuesday, System.DayOfWeek.Wednesday, System.DayOfWeek.Thursday
+        System.DayOfWeek.Saturday,
+        System.DayOfWeek.Sunday,
+        System.DayOfWeek.Monday,
+        System.DayOfWeek.Tuesday,
+        System.DayOfWeek.Wednesday,
+        System.DayOfWeek.Thursday
             };
 
-            // 3. تجهيز الجدول للبيانات
             var dt = new DataTable();
             dt.Columns.Add("اليوم");
             foreach (var slot in timeSlots)
@@ -299,22 +371,28 @@ namespace SchedualApp
                 dt.Columns.Add($"{slot.StartTime.ToString(@"hh\:mm")} - {slot.EndTime.ToString(@"hh\:mm")}");
             }
 
-            // 4. تعبئة البيانات
+            // 3. تعبئة البيانات
             foreach (var day in customDayOrder)
             {
                 var row = dt.NewRow();
-                row["اليوم"] = day.ToString();
+
+                // تحويل الاسم الإنجليزي لعربي للعرض
+                row["اليوم"] = GetArabicName(day);
+
+                // ((( التصحيح الجوهري هنا )))
+                // System.DayOfWeek يبدأ من 0 (الأحد) ... وأنت تخزن 1 (الأحد)
+                // System.DayOfWeek ينتهي بـ 6 (السبت) ... وأنت ستخزن 7 (السبت)
+                // المعادلة: رقم الداتابيز = رقم السي شارب + 1
+                int dbDayId = (int)day + 1;
 
                 for (int i = 0; i < timeSlots.Count; i++)
                 {
                     var timeSlot = timeSlots[i];
                     string colName = $"{timeSlot.StartTime.ToString(@"hh\:mm")} - {timeSlot.EndTime.ToString(@"hh\:mm")}";
 
-                    // البحث عن الحصة في البيانات القادمة من قاعدة البيانات
-                    // ملاحظة: تأكد من طريقة تخزين DayOfWeek في الداتابيس (هل يبدأ من 0 أم 1؟)
-                    // الكود هنا يفترض التوافق المباشر
+                    // البحث باستخدام dbDayId المصحح
                     var slotsInCell = dbTimetable.ScheduleSlots
-                        .Where(s => s.DayOfWeek == (int)day && s.TimeSlotDefinitionID == timeSlot.TimeSlotDefinitionID)
+                        .Where(s => s.DayOfWeek == dbDayId && s.TimeSlotDefinitionID == timeSlot.TimeSlotDefinitionID)
                         .ToList();
 
                     if (slotsInCell.Any())
@@ -322,18 +400,27 @@ namespace SchedualApp
                         var cellContent = new System.Text.StringBuilder();
                         foreach (var slot in slotsInCell)
                         {
+                            // استخدام DataManager لتسريع العرض
+                            // تأكد أن DataManager يحتوي دالة GetLecturer وإلا استخدم _context مؤقتاً
                             var course = _dataManager.GetCourse(slot.CourseID);
-                            var lecturer = _context.Lecturers.Find(slot.LecturerID);
                             var room = _dataManager.GetRoom(slot.RoomID);
+                            var lecturer = _context.Lecturers.Find(slot.LecturerID); // يفضل استخدام كاش هنا
 
-                            cellContent.AppendLine($"{course?.Title ?? "مادة"} ({slot.SlotType})");
+
+                            // 2. تجهيز نص نوع المحاضرة بالعربي
+                            string typeArabic = "";
+                            if (slot.SlotType == "Lecture") typeArabic = "نظري";
+                            else if (slot.SlotType == "Practical") typeArabic = "عملي";
+                            else typeArabic = slot.SlotType; // احتياط لو كان هناك نوع آخر
+
+                            // 3. بناء النص داخل الخلية
+                            // الصيغة: برمجة 1 (نظري)
+                            cellContent.AppendLine($"{course?.Title ?? "مادة"} ({typeArabic})");
                             cellContent.AppendLine($"{lecturer?.FirstName} {lecturer?.LastName}");
-                            cellContent.AppendLine($"قاعة: {room?.Name}");
-                            cellContent.AppendLine("-");
+                            cellContent.AppendLine($"[{room?.Name}]");
+                            cellContent.AppendLine("---");
                         }
-                        // حذف آخر شرطة
-                        if (cellContent.Length > 0) cellContent.Length -= 3;
-
+                        if (cellContent.Length > 0) cellContent.Length -= 5; // حذف الفواصل الزائدة
                         row[colName] = cellContent.ToString();
                     }
                     else
@@ -344,11 +431,28 @@ namespace SchedualApp
                 dt.Rows.Add(row);
             }
 
-            // عرض الجدول
             dgvTimetable.DataSource = dt;
-            dgvTimetable.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
+            // تنسيقات الجدول
+            dgvTimetable.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+            dgvTimetable.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+            dgvTimetable.AutoResizeColumns();
         }
 
+        // دالة مساعدة بسيطة للأسماء العربية
+        private string GetArabicName(System.DayOfWeek day)
+        {
+            switch (day)
+            {
+                case System.DayOfWeek.Saturday: return "السبت";
+                case System.DayOfWeek.Sunday: return "الأحد";
+                case System.DayOfWeek.Monday: return "الاثنين";
+                case System.DayOfWeek.Tuesday: return "الثلاثاء";
+                case System.DayOfWeek.Wednesday: return "الأربعاء";
+                case System.DayOfWeek.Thursday: return "الخميس";
+                case System.DayOfWeek.Friday: return "الجمعة";
+                default: return day.ToString();
+            }
+        }
         private void dgvTimetable_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
 

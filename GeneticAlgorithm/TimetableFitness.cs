@@ -42,6 +42,11 @@ namespace SchedualApp.GeneticAlgorithm
 
                 // 2. تعارض مدرس محلي
                 penalty += (group.GroupBy(g => g.LecturerID).Where(c => c.Count() > 1).Count() * HARD_CONSTRAINT_PENALTY);
+                if (group.Count() > 1)
+                {
+                    // نضرب في (العدد - 1) لنعاقب كل حصة زائدة
+                    penalty += (group.Count() - 1) * HARD_CONSTRAINT_PENALTY;
+                }
             }
 
             foreach (var slot in slots)
@@ -51,6 +56,23 @@ namespace SchedualApp.GeneticAlgorithm
                     _dataManager.IsGloballyBlacklisted(slot.DayOfWeek, slot.TimeSlotDefinitionID, slot.RoomID))
                 {
                     penalty += HARD_CONSTRAINT_PENALTY;
+                }
+                // --- الفحص الجديد لنوع القاعة (Hard Constraint) ---
+                var room = _dataManager.GetRoom(slot.RoomID);
+                if (room != null)
+                {
+                    // إذا الحصة عملي والقاعة ليست معملاً -> كارثة (عقوبة قصوى)
+                    if (slot.SlotType == "Practical" && room.RoomType != "Practical")
+                    {
+                        penalty += HARD_CONSTRAINT_PENALTY;
+                    }
+
+                    // إذا الحصة نظري والقاعة معمل -> أيضاً نمنعها (أو نجعلها عقوبة عالية جداً)
+                    // إذا كنت تقبل بوجود نظري في معمل عند الضرورة، يمكنك تخفيف العقوبة هنا قليلاً
+                    else if (slot.SlotType == "Lecture" && room.RoomType == "Practical")
+                    {
+                        penalty += HARD_CONSTRAINT_PENALTY; // منع تام للخلط
+                    }
                 }
             }
 
