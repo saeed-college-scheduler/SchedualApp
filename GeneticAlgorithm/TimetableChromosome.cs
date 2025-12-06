@@ -64,21 +64,38 @@ namespace SchedualApp.GeneticAlgorithm
             }
         }
 
-        // **إصلاح الخطأ CS0534**: يجب تطبيق هذه الدالة لتتوافق مع متطلبات ChromosomeBase
-        public override Gene GenerateGene(int index)
-        {
-            var random = RandomizationProvider.Current;
-            var requiredSlot = RequiredSlots[index];
+            // تعيين عشوائي للوقت والقاعة
+            var allowedDays = new int[] { 1, 2, 3, 4, 5, 7 };
 
-            // 1. اختيار يوم عشوائي
-            int[] availableDays = { 6, 0, 1, 2, 3, 4 };
-            int dayIndex = random.GetInt(0, availableDays.Length);
-            requiredSlot.DayOfWeek = availableDays[dayIndex];
+            // 2. اختر مؤشراً عشوائياً من المصفوفة
+            var randomIndex = RandomizationProvider.Current.GetInt(0, allowedDays.Length);
 
-            // 2. اختيار فترة زمنية عشوائية
-            var timeSlots = _dataManager.TimeSlotDefinitions;
-            int timeSlotIndex = random.GetInt(0, timeSlots.Count);
-            requiredSlot.TimeSlotDefinitionID = timeSlots[timeSlotIndex].TimeSlotDefinitionID;
+            // 3. احصل على اليوم الفعلي
+            var randomDay = allowedDays[randomIndex];
+            var timeSlotIds = _dataManager.TimeSlotDefinitions.Select(t => t.TimeSlotDefinitionID).ToList();
+            var randomTimeSlot = timeSlotIds[RandomizationProvider.Current.GetInt(0, timeSlotIds.Count)];
+
+            //var roomIds = _dataManager.Rooms.Select(r => r.RoomID).ToList();
+            //var randomRoom = roomIds[RandomizationProvider.Current.GetInt(0, roomIds.Count)];
+            // 1. تحديد نوع القاعة المطلوب بناءً على نوع الحصة
+            // إذا كانت الحصة "Practical" نبحث عن "Lab"، وإلا نبحث عن "Lecture"
+            string targetRoomType = (slot.SlotType == "Practical") ? "Practical" : "Lecture";
+
+            // 2. فلترة القاعات المناسبة فقط
+            var suitableRoomIds = _dataManager.Rooms
+                .Where(r => r.RoomType == targetRoomType)
+                .Select(r => r.RoomID)
+                .ToList();
+
+            // أمان: إذا لم نجد قاعات مناسبة (مثلاً لا يوجد معامل)، نستخدم أي قاعة لتجنب توقف البرنامج
+            // ولكن الأفضل أن يكون لديك ما يكفي من القاعات
+            if (!suitableRoomIds.Any())
+            {
+                suitableRoomIds = _dataManager.Rooms.Select(r => r.RoomID).ToList();
+            }
+
+            // 3. الاختيار العشوائي من القائمة المفلترة
+            var randomRoom = suitableRoomIds[RandomizationProvider.Current.GetInt(0, suitableRoomIds.Count)];
 
             // 3. اختيار قاعة عشوائية
             var rooms = _dataManager.Rooms;

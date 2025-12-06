@@ -18,6 +18,16 @@ namespace SchedualApp
         {
             InitializeComponent();
 
+            // --- إعدادات اللغة العربية ---
+            this.RightToLeft = RightToLeft.Yes; // تفعيل الاتجاه من اليمين لليسار
+
+            // ضبط اتجاه النصوص داخل مربعات الإدخال
+            _txtCode.RightToLeft = RightToLeft.Yes;
+            _txtTitle.RightToLeft = RightToLeft.Yes;
+            _txtLectureHours.RightToLeft = RightToLeft.Yes;
+            _txtPracticalHours.RightToLeft = RightToLeft.Yes;
+            _chkIsPractical.RightToLeft = RightToLeft.Yes;
+
             this.Load += CoursManagementControl_Load;
         }
 
@@ -33,38 +43,49 @@ namespace SchedualApp
                 var list = await _db.Courses.AsNoTracking().ToListAsync();
                 _bindingList = new BindingList<Cours>(list);
                 _dataGridView.DataSource = _bindingList;
+
+                // --- تنسيق الأعمدة وإخفاء غير الضروري ---
+                if (_dataGridView.Columns.Contains("CourseID")) _dataGridView.Columns["CourseID"].Visible = false;
+                if (_dataGridView.Columns.Contains("Timetables")) _dataGridView.Columns["Timetables"].Visible = false;
+                if (_dataGridView.Columns.Contains("DepartmentID")) _dataGridView.Columns["DepartmentID"].Visible = false;
+                if (_dataGridView.Columns.Contains("Department")) _dataGridView.Columns["Department"].Visible = false;
+                if (_dataGridView.Columns.Contains("CourseLecturers")) _dataGridView.Columns["CourseLecturers"].Visible = false;
+                if (_dataGridView.Columns.Contains("CourseLevels")) _dataGridView.Columns["CourseLevels"].Visible = false;
+                if (_dataGridView.Columns.Contains("ScheduleSlots")) _dataGridView.Columns["ScheduleSlots"].Visible = false;
+                //if (_dataGridView.Columns.Contains("Department")) _dataGridView.Columns["Department"].Visible = false;
+                //if (_dataGridView.Columns.Contains("Department")) _dataGridView.Columns["Department"].Visible = false;
+                // تعريب الرؤوس
+                if (_dataGridView.Columns.Contains("Code")) _dataGridView.Columns["Code"].HeaderText = "رمز المقرر";
+                if (_dataGridView.Columns.Contains("Title")) _dataGridView.Columns["Title"].HeaderText = "اسم المقرر";
+                if (_dataGridView.Columns.Contains("LectureHours")) _dataGridView.Columns["LectureHours"].HeaderText = "ساعات نظري";
+                if (_dataGridView.Columns.Contains("PracticalHours")) _dataGridView.Columns["PracticalHours"].HeaderText = "ساعات عملي";
+                if (_dataGridView.Columns.Contains("IsPractical")) _dataGridView.Columns["IsPractical"].HeaderText = "له عملي؟";
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error loading data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("خطأ في تحميل البيانات: " + ex.Message, "خطأ", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private async void BtnSave_Click(object sender, EventArgs e)
         {
-            // 1. تعريف متغير لاستقبال الرقم
-            int lectureHours;
-            int practicalHours;
+            int lectureHours=0;
+            int practicalHours=0;
 
-            // 2. محاولة تحويل النص إلى رقم
+            // التحقق من الأرقام
             bool isNumber = int.TryParse(_txtLectureHours.Text, out lectureHours) && int.TryParse(_txtPracticalHours.Text, out practicalHours);
 
-            // 3. التحقق من النتيجة
             if (!isNumber)
             {
-                // الحالة: المستخدم أدخل نصاً أو رموزاً غير صالحة
-                MessageBox.Show("عفواً، يجب إدخال قيمة رقمية فقط في خانة الساعات.", "خطأ في الإدخال");
-
-                // إعادة التركيز على الحقل وتفريغه (اختياري)
+                MessageBox.Show("عفواً، يجب إدخال قيمة رقمية فقط في خانة الساعات.", "خطأ في الإدخال", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 _txtLectureHours.Focus();
                 _txtLectureHours.SelectAll();
-                return; // إيقاف تنفيذ الكود
+                return;
             }
 
-            // 4. (اختياري) التحقق من أن الرقم ليس سالباً
-            if (lectureHours < 0)
+            if (lectureHours < 0 || practicalHours < 0)
             {
-                MessageBox.Show("لا يمكن أن تكون الساعات بالسالب.");
+                MessageBox.Show("لا يمكن أن تكون الساعات بالسالب.", "خطأ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -89,7 +110,6 @@ namespace SchedualApp
                         IsPractical = _chkIsPractical.Checked
                     };
                     _db.Courses.Add(newCourse);
-
                 }
                 else
                 {
@@ -110,7 +130,7 @@ namespace SchedualApp
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error saving data: " + ex.ToString());
+                MessageBox.Show("خطأ في الحفظ: " + ex.ToString(), "خطأ", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -123,11 +143,10 @@ namespace SchedualApp
         {
             if (_selectedCourseId == 0) return;
 
-            if (MessageBox.Show("Confirm Delete?", "Delete", MessageBoxButtons.YesNo) == DialogResult.No) return;
+            if (MessageBox.Show("هل أنت متأكد من حذف هذا المقرر؟", "تأكيد الحذف", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No) return;
 
             try
             {
-
                 var toDelete = await _db.Courses.FindAsync(_selectedCourseId);
                 if (toDelete != null)
                 {
@@ -140,7 +159,7 @@ namespace SchedualApp
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error deleting: " + ex.Message);
+                MessageBox.Show("خطأ في الحذف: " + ex.Message, "خطأ", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -186,7 +205,7 @@ namespace SchedualApp
             practicalHours = 0;
             if (string.IsNullOrWhiteSpace(_txtCode.Text) || string.IsNullOrWhiteSpace(_txtTitle.Text))
             {
-                MessageBox.Show("Required fields missing");
+                MessageBox.Show("يرجى تعبئة الحقول المطلوبة (الرمز والاسم).", "بيانات ناقصة", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
             int.TryParse(_txtLectureHours.Text, out lectureHours);
@@ -194,9 +213,11 @@ namespace SchedualApp
             return true;
         }
 
-        private void _formLayout_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
+        // Event Handlers الفارغة (يمكنك حذفها إذا لم تكن مرتبطة)
+        private void _formLayout_Paint(object sender, PaintEventArgs e) { }
+        private void _txtPracticalHours_TextChanged(object sender, EventArgs e) { }
+        private void _txtPracticalHours_TextChanged_1(object sender, EventArgs e) { }
+        private void _buttonsPanel_Paint(object sender, PaintEventArgs e) { }
+        private void _txtCode_TextChanged(object sender, EventArgs e) { }
     }
 }

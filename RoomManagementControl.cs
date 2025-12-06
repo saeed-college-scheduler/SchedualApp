@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Data;
+using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Data.Entity;
 
 namespace SchedualApp
 {
@@ -12,52 +12,62 @@ namespace SchedualApp
         private SchedualAppModel db = new SchedualAppModel();
         private Room selectedRoom;
 
+        // كلاس مساعد لربط نوع القاعة (الاسم بالعربي والقيمة بالانجليزي)
+        public class RoomTypeItem
+        {
+            public string Text { get; set; }
+            public string Value { get; set; }
+        }
+
         public RoomManagementControl()
         {
             InitializeComponent();
 
-            // 1. Initial data load - يجب أن يتم استدعاؤه بعد InitializeComponent()
-            LoadDataAsync();
+            // --- إعدادات اللغة العربية ---
+            this.RightToLeft = RightToLeft.Yes;
+            txtRoomName.RightToLeft = RightToLeft.Yes;
+            txtCapacity.RightToLeft = RightToLeft.Yes;
+            cmbRoomType.RightToLeft = RightToLeft.Yes;
 
-            // 2. Set up DataGridView columns and event handlers
+            // 1. إعداد قائمة أنواع القاعات (عربي للمستخدم، إنجليزي للداتابيس)
+            var roomTypes = new List<RoomTypeItem>
+            {
+                new RoomTypeItem { Text = "قاعة محاضرات (نظري)", Value = "Lecture" },
+                new RoomTypeItem { Text = "معمل (عملي)", Value = "Practical" } // أو "Lab" حسب ما تعتمده في الداتابيس
+            };
+
+            cmbRoomType.DataSource = roomTypes;
+            cmbRoomType.DisplayMember = "Text";
+            cmbRoomType.ValueMember = "Value";
+
+            // 2. إعداد الأعمدة برمجياً لضمان التعريب
             dgvRooms.AutoGenerateColumns = false;
-            // تم إضافة عمود RoomType
+            dgvRooms.Columns.Clear();
             dgvRooms.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "RoomID", HeaderText = "ID", Visible = false });
-            dgvRooms.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Name", HeaderText = "Room Name" });
-            dgvRooms.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Capacity", HeaderText = "Capacity" });
-            dgvRooms.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "RoomType", HeaderText = "Type" });
+            dgvRooms.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Name", HeaderText = "اسم القاعة" });
+            dgvRooms.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Capacity", HeaderText = "السعة" });
+            dgvRooms.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "RoomType", HeaderText = "النوع" });
 
+            // 3. ربط الأحداث
+            this.Load += async (s, e) => await LoadDataAsync();
             dgvRooms.SelectionChanged += dgvRooms_SelectionChanged;
             btnSave.Click += async (s, e) => await BtnSave_ClickAsync(s, e);
             btnDelete.Click += async (s, e) => await BtnDelete_ClickAsync(s, e);
             btnNew.Click += BtnNew_Click;
-
-            // تهيئة ComboBox
-            // التأكد من وجود عناصر قبل تعيين SelectedIndex
-            if (cmbRoomType.Items.Count > 0)
-            {
-                cmbRoomType.SelectedIndex = 0;
-            }
         }
 
         private async Task LoadDataAsync()
         {
             try
             {
-                if (dgvRooms == null)
-                {
-                    MessageBox.Show("Error: DataGridView (dgvRooms) is not initialized.", "Initialization Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-
-                var rooms = await db.Rooms.ToListAsync();
+                var rooms = await db.Rooms.AsNoTracking().ToListAsync();
                 dgvRooms.DataSource = rooms;
                 dgvRooms.ClearSelection();
                 ClearForm();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading data: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"خطأ في تحميل البيانات: {ex.Message}", "خطأ", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -69,12 +79,14 @@ namespace SchedualApp
                 selectedRoom = selectedRow.DataBoundItem as Room;
                 PopulateForm(selectedRoom);
                 btnDelete.Enabled = true;
+                btnSave.Text = "تعديل";
             }
             else
             {
                 selectedRoom = null;
                 ClearForm();
                 btnDelete.Enabled = false;
+                btnSave.Text = "حفظ";
             }
         }
 
@@ -84,8 +96,9 @@ namespace SchedualApp
             {
                 txtRoomName.Text = room.Name;
                 txtCapacity.Text = room.Capacity.ToString();
-                // تعيين قيمة ComboBox
-                cmbRoomType.SelectedItem = room.RoomType;
+
+                // تحديد العنصر في القائمة بناءً على القيمة المخزنة (Lecture/Practical)
+                cmbRoomType.SelectedValue = room.RoomType;
             }
         }
 
@@ -94,11 +107,9 @@ namespace SchedualApp
             txtRoomName.Clear();
             txtCapacity.Clear();
             selectedRoom = null;
-            // تعيين قيمة افتراضية للـ ComboBox
-            if (cmbRoomType.Items.Count > 0)
-            {
-                cmbRoomType.SelectedIndex = 0;
-            }
+            if (cmbRoomType.Items.Count > 0) cmbRoomType.SelectedIndex = 0;
+            btnSave.Text = "حفظ";
+            btnDelete.Enabled = false;
         }
 
         private void BtnNew_Click(object sender, EventArgs e)
@@ -107,6 +118,7 @@ namespace SchedualApp
             dgvRooms.ClearSelection();
             txtRoomName.Focus();
         }
+
         private async Task BtnSave_ClickAsync(object sender, EventArgs e)
         {
             if (!ValidateInput()) return;
@@ -115,49 +127,29 @@ namespace SchedualApp
             {
                 if (selectedRoom == null)
                 {
-                    // New Room
                     selectedRoom = new Room();
                     db.Rooms.Add(selectedRoom);
                 }
+                else
+                {
+                    // إعادة ربط الكائن بالسياق إذا كان مفصولاً (للتعديل)
+                    db.Entry(selectedRoom).State = EntityState.Modified;
+                }
 
-                // Update properties
                 selectedRoom.Name = txtRoomName.Text;
                 selectedRoom.Capacity = int.Parse(txtCapacity.Text);
-                // تعيين قيمة RoomType من ComboBox
-                selectedRoom.RoomType = cmbRoomType.SelectedItem.ToString();
 
-                // Save changes to the database
+                // حفظ القيمة الإنجليزية (Lecture/Practical)
+                selectedRoom.RoomType = cmbRoomType.SelectedValue.ToString();
+
                 await db.SaveChangesAsync();
-
-                // Reload data to update the DataGridView
                 await LoadDataAsync();
 
-                MessageBox.Show("Room saved successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            catch (System.Data.Entity.Validation.DbEntityValidationException ex)
-            {
-                // هذا الجزء يعالج أخطاء التحقق من الكيان (Validation Errors)
-                var errorMessages = ex.EntityValidationErrors
-                    .SelectMany(x => x.ValidationErrors)
-                    .Select(x => x.PropertyName + ": " + x.ErrorMessage);
-
-                var fullErrorMessage = string.Join(Environment.NewLine, errorMessages);
-                var exceptionMessage = $"Validation failed for one or more entities. Errors: {fullErrorMessage}";
-
-                MessageBox.Show(exceptionMessage, "Error saving data (Validation)", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            catch (System.Data.Entity.Infrastructure.DbUpdateException ex)
-            {
-                // **السطر المصحح: عرض الاستثناء الداخلي من قاعدة البيانات**
-                string innerMessage = ex.InnerException != null && ex.InnerException.InnerException != null
-                                    ? ex.InnerException.InnerException.Message
-                                    : ex.Message;
-
-                MessageBox.Show($"Error saving data (Database Update): {innerMessage}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("تم حفظ بيانات القاعة بنجاح.", "نجاح", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"حدث خطأ أثناء الحفظ: {ex.Message}", "خطأ", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -165,43 +157,46 @@ namespace SchedualApp
         {
             if (selectedRoom == null) return;
 
-            var result = MessageBox.Show($"Are you sure you want to delete Room: {selectedRoom.Name}?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            var result = MessageBox.Show($"هل أنت متأكد من حذف القاعة: {selectedRoom.Name}؟", "تأكيد الحذف", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 
             if (result == DialogResult.Yes)
             {
                 try
                 {
-                    db.Rooms.Remove(selectedRoom);
-                    await db.SaveChangesAsync();
-                    await LoadDataAsync();
-                    MessageBox.Show("Room deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    // يجب جلب الكائن من السياق الحالي لحذفه إذا كان مفصولاً
+                    var roomToDelete = await db.Rooms.FindAsync(selectedRoom.RoomID);
+                    if (roomToDelete != null)
+                    {
+                        db.Rooms.Remove(roomToDelete);
+                        await db.SaveChangesAsync();
+                        await LoadDataAsync();
+                        MessageBox.Show("تم حذف القاعة بنجاح.", "نجاح", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error deleting data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"خطأ في الحذف: {ex.Message}", "خطأ", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
 
         private bool ValidateInput()
         {
-            if (string.IsNullOrWhiteSpace(txtRoomName.Text) || string.IsNullOrWhiteSpace(txtCapacity.Text) || cmbRoomType.SelectedItem == null)
+            if (string.IsNullOrWhiteSpace(txtRoomName.Text) || string.IsNullOrWhiteSpace(txtCapacity.Text) || cmbRoomType.SelectedValue == null)
             {
-                MessageBox.Show("All fields are required (including Room Type).", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("يرجى تعبئة جميع الحقول المطلوبة.", "بيانات ناقصة", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
 
-            int capacity;
-            if (!int.TryParse(txtCapacity.Text, out capacity))
+            if (!int.TryParse(txtCapacity.Text, out int cap) || cap <= 0)
             {
-                MessageBox.Show("Capacity must be a valid integer.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("السعة يجب أن تكون رقماً صحيحاً أكبر من صفر.", "خطأ في الإدخال", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
 
             return true;
         }
 
-        // Dispose method to clean up the DbContext
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -211,14 +206,8 @@ namespace SchedualApp
             base.Dispose(disposing);
         }
 
-        private void cmbRoomType_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void panelForm_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
+        // Event Handlers غير المستخدمة
+        private void cmbRoomType_SelectedIndexChanged(object sender, EventArgs e) { }
+        private void panelForm_Paint(object sender, PaintEventArgs e) { }
     }
 }

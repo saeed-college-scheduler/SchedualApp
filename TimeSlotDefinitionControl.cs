@@ -16,19 +16,29 @@ namespace SchedualApp
         {
             InitializeComponent();
 
-            // Set up DataGridView columns and event handlers
+            // --- إعدادات اللغة العربية ---
+            this.RightToLeft = RightToLeft.Yes;
+            txtSlotNumber.RightToLeft = RightToLeft.Yes;
+            txtStartTime.RightToLeft = RightToLeft.Yes;
+            txtEndTime.RightToLeft = RightToLeft.Yes;
+
+            // إعداد أعمدة الجدول
             dgvTimeSlots.AutoGenerateColumns = false;
             dgvTimeSlots.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "TimeSlotDefinitionID", HeaderText = "ID", Visible = false });
-            dgvTimeSlots.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "SlotNumber", HeaderText = "Slot Number" });
-            dgvTimeSlots.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "StartTime", HeaderText = "Start Time" });
-            dgvTimeSlots.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "EndTime", HeaderText = "End Time" });
+            dgvTimeSlots.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "SlotNumber", HeaderText = "رقم الفترة" });
+            dgvTimeSlots.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "StartTime", HeaderText = "وقت البدء" });
+            dgvTimeSlots.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "EndTime", HeaderText = "وقت النهاية" });
+
+            // تنسيق عرض الوقت في الأعمدة (اختياري ليكون HH:mm فقط)
+            dgvTimeSlots.Columns[2].DefaultCellStyle.Format = @"hh\:mm";
+            dgvTimeSlots.Columns[3].DefaultCellStyle.Format = @"hh\:mm";
 
             dgvTimeSlots.SelectionChanged += dgvTimeSlots_SelectionChanged;
             btnSave.Click += async (s, e) => await BtnSave_ClickAsync(s, e);
             btnDelete.Click += async (s, e) => await BtnDelete_ClickAsync(s, e);
             btnNew.Click += BtnNew_Click;
 
-            // Initial data load
+            // تحميل البيانات
             LoadDataAsync();
         }
 
@@ -36,14 +46,14 @@ namespace SchedualApp
         {
             try
             {
-                var timeSlots = await db.TimeSlotDefinitions.ToListAsync();
+                var timeSlots = await db.TimeSlotDefinitions.AsNoTracking().OrderBy(t => t.SlotNumber).ToListAsync();
                 dgvTimeSlots.DataSource = timeSlots;
                 dgvTimeSlots.ClearSelection();
                 ClearForm();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"خطأ في تحميل البيانات: {ex.Message}", "خطأ", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -55,12 +65,14 @@ namespace SchedualApp
                 selectedTimeSlotDefinition = selectedRow.DataBoundItem as TimeSlotDefinition;
                 PopulateForm(selectedTimeSlotDefinition);
                 btnDelete.Enabled = true;
+                btnSave.Text = "تعديل";
             }
             else
             {
                 selectedTimeSlotDefinition = null;
                 ClearForm();
                 btnDelete.Enabled = false;
+                btnSave.Text = "حفظ";
             }
         }
 
@@ -68,12 +80,8 @@ namespace SchedualApp
         {
             if (timeSlotDefinition != null)
             {
-                // Assuming txtSlotNumber is a TextBox for the integer SlotNumber
                 txtSlotNumber.Text = timeSlotDefinition.SlotNumber.ToString();
-
-                // Assuming we use MaskedTextBox or similar for TimeSpan input, 
-                // or just a simple TextBox for demonstration purposes.
-                // For TimeSpan, a simple string representation is used here.
+                // عرض الوقت بتنسيق HH:mm
                 txtStartTime.Text = timeSlotDefinition.StartTime.ToString(@"hh\:mm");
                 txtEndTime.Text = timeSlotDefinition.EndTime.ToString(@"hh\:mm");
             }
@@ -85,6 +93,8 @@ namespace SchedualApp
             txtStartTime.Clear();
             txtEndTime.Clear();
             selectedTimeSlotDefinition = null;
+            btnSave.Text = "حفظ";
+            btnDelete.Enabled = false;
         }
 
         private void BtnNew_Click(object sender, EventArgs e)
@@ -101,35 +111,37 @@ namespace SchedualApp
             try
             {
                 TimeSpan startTime, endTime;
+                // محاولة تحليل الوقت المدخل
                 if (!TimeSpan.TryParse(txtStartTime.Text, out startTime) || !TimeSpan.TryParse(txtEndTime.Text, out endTime))
                 {
-                    MessageBox.Show("Invalid time format. Please use HH:MM.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("صيغة الوقت غير صحيحة. يرجى استخدام الصيغة HH:MM (مثال 08:00).", "خطأ في الإدخال", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
                 if (selectedTimeSlotDefinition == null)
                 {
-                    // New TimeSlotDefinition
+                    // جديد
                     selectedTimeSlotDefinition = new TimeSlotDefinition();
                     db.TimeSlotDefinitions.Add(selectedTimeSlotDefinition);
                 }
+                else
+                {
+                    // تعديل
+                    db.Entry(selectedTimeSlotDefinition).State = EntityState.Modified;
+                }
 
-                // Update properties
                 selectedTimeSlotDefinition.SlotNumber = int.Parse(txtSlotNumber.Text);
                 selectedTimeSlotDefinition.StartTime = startTime;
                 selectedTimeSlotDefinition.EndTime = endTime;
 
-                // Save changes to the database
                 await db.SaveChangesAsync();
-
-                // Reload data to update the DataGridView
                 await LoadDataAsync();
 
-                MessageBox.Show("Time Slot Definition saved successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("تم حفظ بيانات الفترة الزمنية بنجاح.", "نجاح", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"خطأ في الحفظ: {ex.Message}", "خطأ", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -137,20 +149,25 @@ namespace SchedualApp
         {
             if (selectedTimeSlotDefinition == null) return;
 
-            var result = MessageBox.Show($"Are you sure you want to delete Time Slot Definition ID: {selectedTimeSlotDefinition.TimeSlotDefinitionID}?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            var result = MessageBox.Show($"هل أنت متأكد من حذف الفترة رقم: {selectedTimeSlotDefinition.SlotNumber}؟", "تأكيد الحذف", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 
             if (result == DialogResult.Yes)
             {
                 try
                 {
-                    db.TimeSlotDefinitions.Remove(selectedTimeSlotDefinition);
-                    await db.SaveChangesAsync();
-                    await LoadDataAsync();
-                    MessageBox.Show("Time Slot Definition deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    // إعادة جلب الكائن للحذف الآمن
+                    var itemToDelete = await db.TimeSlotDefinitions.FindAsync(selectedTimeSlotDefinition.TimeSlotDefinitionID);
+                    if (itemToDelete != null)
+                    {
+                        db.TimeSlotDefinitions.Remove(itemToDelete);
+                        await db.SaveChangesAsync();
+                        await LoadDataAsync();
+                        MessageBox.Show("تم الحذف بنجاح.", "نجاح", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error deleting data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"خطأ في الحذف: {ex.Message}", "خطأ", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -159,21 +176,19 @@ namespace SchedualApp
         {
             if (string.IsNullOrWhiteSpace(txtSlotNumber.Text) || string.IsNullOrWhiteSpace(txtStartTime.Text) || string.IsNullOrWhiteSpace(txtEndTime.Text))
             {
-                MessageBox.Show("All fields are required.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("يرجى تعبئة جميع الحقول.", "بيانات ناقصة", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
 
-            int slotNumber;
-            if (!int.TryParse(txtSlotNumber.Text, out slotNumber))
+            if (!int.TryParse(txtSlotNumber.Text, out _))
             {
-                MessageBox.Show("Slot Number must be a valid integer.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("رقم الفترة يجب أن يكون رقماً صحيحاً.", "خطأ في الإدخال", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
 
             return true;
         }
 
-        // Dispose method to clean up the DbContext
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -183,14 +198,7 @@ namespace SchedualApp
             base.Dispose(disposing);
         }
 
-        private void TimeSlotDefinitionControl_Load(object sender, EventArgs e)
-        {
-
-        }
-
-        private void panelForm_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
+        private void TimeSlotDefinitionControl_Load(object sender, EventArgs e) { }
+        private void panelForm_Paint(object sender, PaintEventArgs e) { }
     }
 }

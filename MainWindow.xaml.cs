@@ -15,7 +15,7 @@ namespace SchedualApp
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // عند تحميل النافذة، قم بتحميل واجهة المقررات كواجهة افتراضية
-            LoadWinFormsControl(new CoursManagementControl(), "Cours");
+            LoadWinFormsControl(new TimetableGenerationControl(), "Cours");
         }
 
         // دالة مساعدة لتبديل الـ UserControl وتحديث حالة الأزرار
