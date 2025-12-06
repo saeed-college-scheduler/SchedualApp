@@ -135,8 +135,8 @@
     <Compile Include="DepartmentManagementControl.Designer.cs">
       <DependentUpon>DepartmentManagementControl.cs</DependentUpon>
     </Compile>
-    <Compile Include="Feature.cs" />
     <Compile Include="GeneticAlgorithm\DataManager.cs" />
+    <Compile Include="Room.cs" />
     <Compile Include="GeneticAlgorithm\ScheduleSlot.cs" />
     <Compile Include="GeneticAlgorithm\TimetableChromosome.cs" />
     <Compile Include="GeneticAlgorithm\TimetableFitness.cs" />
@@ -168,10 +168,12 @@
     <Compile Include="Migrations\202512041842394_DropFeatureAndRoomFeature.Designer.cs">
       <DependentUpon>202512041842394_DropFeatureAndRoomFeature.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202512052355265_RemoveIsActiveAndMaxWorkFromLecturere.cs" />
+    <Compile Include="Migrations\202512052355265_RemoveIsActiveAndMaxWorkFromLecturere.Designer.cs">
+      <DependentUpon>202512052355265_RemoveIsActiveAndMaxWorkFromLecturere.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="Room.cs" />
-    <Compile Include="RoomFeature.cs" />
     <Compile Include="RoomManagementControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -272,6 +274,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202512041842394_DropFeatureAndRoomFeature.resx">
       <DependentUpon>202512041842394_DropFeatureAndRoomFeature.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202512052355265_RemoveIsActiveAndMaxWorkFromLecturere.resx">
+      <DependentUpon>202512052355265_RemoveIsActiveAndMaxWorkFromLecturere.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

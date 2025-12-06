@@ -3,31 +3,28 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:wfi="clr-namespace:System.Windows.Forms.Integration;assembly=WindowsFormsIntegration"
         Title="SchedualApp - Timetable Management" Height="600" Width="1000"
-        Loaded="Window_Loaded">
+        Loaded="Window_Loaded"
+        FlowDirection="RightToLeft">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="0*"/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-	<Grid>
-		<Grid.ColumnDefinitions>
-			<ColumnDefinition Width="0*"/>
-			<ColumnDefinition/>
-		</Grid.ColumnDefinitions>
-		<Grid.RowDefinitions>
-			<RowDefinition Height="Auto"/>
-			<RowDefinition Height="*"/>
-		</Grid.RowDefinitions>
-
-		<!-- شريط الأزرار في الصف الأول (Grid.Row="0" ) -->
-		<StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5,5,5,5" x:Name="NavigationPanel" Grid.ColumnSpan="2">
-			<!-- تمت إضافة x:Name="NavigationPanel" لتسهيل الوصول إليه من الكود -->
-			<Button Content="Departments Management" Click="DepartmentsButton_Click" Margin="5,0" Tag="Departments"/>
-			<Button Content="Courses Management" Click="CoursesButton_Click" Margin="5,0" Tag="Courses"/>
-			<Button Content="Lecturers Management" Click="LecturersButton_Click" Margin="5,0" Tag="Lecturers"/>
-			<Button Content="Rooms Management" Click="RoomsButton_Click" Margin="5,0" Tag="Rooms"/>
-			<Button Content="Time Slots Definition" Click="TimeSlotsButton_Click" Margin="5,0" Tag="TimeSlots"/>
-			<Button Content="Timetable Generation" Click="GenerationButton_Click" Margin="5,0" Tag="Generation"/>
-            <Button Content="Course-Level Management" Click="CourseLevelButton_Click" Margin="5,0" Tag="CourseLevel"/>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5,5,5,5" x:Name="NavigationPanel" Grid.ColumnSpan="2">
+            <Button Content="الرئيسية" Click="GenerationButton_Click" Margin="5,0" Tag="Generation"/>
+            <Button Content="إدارة ألاقسام" Click="DepartmentsButton_Click" Margin="5,0" Tag="Departments"/>
+            <Button Content="إدارة المقررات" Click="CoursesButton_Click" Margin="5,0" Tag="Courses"/>
+            <Button Content="إدارة المحاضرين" Click="LecturersButton_Click" Margin="5,0" Tag="Lecturers"/>
+            <Button Content="إدارة القاعات" Click="RoomsButton_Click" Margin="5,0" Tag="Rooms"/>
+            <Button Content="إدارة الفترات الزمنية" Click="TimeSlotsButton_Click" Margin="5,0" Tag="TimeSlots"/>
+            <Button Content="إدارة الخطط الدراسية" Click="CourseLevelButton_Click" Margin="5,0" Tag="CourseLevel"/>
         </StackPanel>
 
-		<!-- WindowsFormsHost في الصف الثاني (Grid.Row="1") -->
-		<wfi:WindowsFormsHost x:Name="winFormsHost" Grid.Row="1" Grid.ColumnSpan="2" ChildChanged="winFormsHost_ChildChanged" />
-	</Grid>
+        <wfi:WindowsFormsHost x:Name="winFormsHost" Grid.Row="1" Grid.ColumnSpan="2" ChildChanged="winFormsHost_ChildChanged" />
+    </Grid>
 </Window>

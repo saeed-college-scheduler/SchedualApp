@@ -81,8 +81,6 @@ namespace SchedualApp
             _txtFirstName.Clear();
             _txtLastName.Clear();
             _txtAcademicRank.Clear();
-            _txtMaxWorkload.Text = "12"; // Default workload
-            _chkIsActive.Checked = true;
 
             _btnDelete.Enabled = false;
             _btnSave.Text = "حفظ محاضر جديد";
@@ -111,16 +109,19 @@ namespace SchedualApp
                 await _context.Lecturers.LoadAsync();
                 _lecturers = _context.Lecturers.Local.ToBindingList();
 
+
                 // Rebind the grid to the anonymous object list
                 _lecturerGrid.DataSource = _lecturers.Select(l => new
                 {
                     l.LecturerID,
                     FullName = $"{l.FirstName} {l.LastName}",
-                    l.AcademicRank,
-                    l.MaxWorkload,
-                    l.IsActive
+                    l.AcademicRank
                 }).ToList();
                 _lecturerGrid.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
+                if (_lecturerGrid.Columns.Contains("LecturerID")) _lecturerGrid.Columns["LecturerID"].HeaderText = "معرف المحاضر";
+                if (_lecturerGrid.Columns.Contains("FullName")) _lecturerGrid.Columns["FullName"].HeaderText = "الاسم";
+                if (_lecturerGrid.Columns.Contains("AcademicRank")) _lecturerGrid.Columns["AcademicRank"].HeaderText = "الدرجة الأكاديمية";
+                //if (_lecturerGrid.Columns.Contains("FullName")) _lecturerGrid.Columns["FullName"].HeaderText = "الاسم";
 
                 // 2. Load Availability ListBox Data (Days and Time Slots)
                 // Filter out Friday (5) and Saturday (6)
@@ -219,11 +220,9 @@ namespace SchedualApp
                 _txtFirstName.Text = _currentLecturer.FirstName;
                 _txtLastName.Text = _currentLecturer.LastName;
                 _txtAcademicRank.Text = _currentLecturer.AcademicRank;
-                _txtMaxWorkload.Text = _currentLecturer.MaxWorkload.ToString();
-                _chkIsActive.Checked = _currentLecturer.IsActive;
 
                 _btnDelete.Enabled = true;
-                _btnSave.Text = "تحديث المحاضر";
+                _btnSave.Text = "تحديث";
             }
         }
 
@@ -245,11 +244,15 @@ namespace SchedualApp
                     _availabilityGrid.DataSource = _availabilities.Select(la => new
                     {
                         la.LecturerAvailabilityID,
-                        // FIX: Use la.DayOfWeek - 1 to get the correct C# DayOfWeek enum value for ArabicDayNames
                         Day = ArabicDayNames.GetArabicDayName((DayOfWeek)(la.DayOfWeek - 1)),
                         TimeSlot = $"{la.TimeSlotDefinition.StartTime.ToString(@"hh\:mm")} - {la.TimeSlotDefinition.EndTime.ToString(@"hh\:mm")}"
                     }).ToList();
                     _availabilityGrid.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
+                    //اخفاء عمود LecturerAvailabilityID
+                    if (_availabilityGrid.Columns.Contains("LecturerAvailabilityID")) _availabilityGrid.Columns["LecturerAvailabilityID"].Visible = false;
+                    //تغيير اسماء الاعمدة بالعربي
+                    if (_availabilityGrid.Columns.Contains("Day")) _availabilityGrid.Columns["Day"].HeaderText = "اليوم";
+                    if (_availabilityGrid.Columns.Contains("TimeSlot")) _availabilityGrid.Columns["TimeSlot"].HeaderText = "الفترة";
 
                     // Check the corresponding items in the Availability CheckedListBox
                     for (int i = 0; i < _availabilityListBox.Items.Count; i++)
@@ -277,6 +280,12 @@ namespace SchedualApp
                         cl.TeachingType
                     }).ToList();
                     _courseLecturerGrid.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
+                    //اخفاء عمود LecturerAvailabilityID
+                    if (_courseLecturerGrid.Columns.Contains("CourseLecturerID")) _courseLecturerGrid.Columns["CourseLecturerID"].Visible = false;
+                    //تغيير اسماء الاعمدة بالعربي
+                    if (_courseLecturerGrid.Columns.Contains("Course")) _courseLecturerGrid.Columns["Course"].HeaderText = "المقرر";
+                    if (_courseLecturerGrid.Columns.Contains("TeachingType")) _courseLecturerGrid.Columns["TeachingType"].HeaderText = "نوع التدريس";
+
 
                     // Check the corresponding items in the Course CheckedListBox
                     for (int i = 0; i < _courseListBox.Items.Count; i++)
@@ -317,8 +326,6 @@ namespace SchedualApp
                     _currentLecturer.FirstName = _txtFirstName.Text;
                     _currentLecturer.LastName = _txtLastName.Text;
                     _currentLecturer.AcademicRank = _txtAcademicRank.Text;
-                    _currentLecturer.MaxWorkload = int.Parse(_txtMaxWorkload.Text);
-                    _currentLecturer.IsActive = _chkIsActive.Checked;
 
                     _context.Lecturers.Add(_currentLecturer);
                     _lecturers.Add(_currentLecturer);
@@ -329,8 +336,6 @@ namespace SchedualApp
                 _currentLecturer.FirstName = _txtFirstName.Text;
                 _currentLecturer.LastName = _txtLastName.Text;
                 _currentLecturer.AcademicRank = _txtAcademicRank.Text;
-                _currentLecturer.MaxWorkload = int.Parse(_txtMaxWorkload.Text);
-                _currentLecturer.IsActive = _chkIsActive.Checked;
 
                 // Save changes to get the LecturerID for new lecturers
                 await _context.SaveChangesAsync();
@@ -425,9 +430,7 @@ namespace SchedualApp
                 {
                     l.LecturerID,
                     FullName = $"{l.FirstName} {l.LastName}",
-                    l.AcademicRank,
-                    l.MaxWorkload,
-                    l.IsActive
+                    l.AcademicRank
                 }).ToList();
                 _lecturerGrid.Refresh();
                 DisplayLecturerData(); // Update form buttons
@@ -462,11 +465,7 @@ namespace SchedualApp
                 return false;
             }
 
-            if (!int.TryParse(_txtMaxWorkload.Text, out int workload) || workload <= 0)
-            {
-                MessageBox.Show("يجب إدخال قيمة صحيحة وإيجابية للحد الأقصى لساعات العمل.", "خطأ في الإدخال", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return false;
-            }
+           
 
             return true;
         }
@@ -506,9 +505,7 @@ namespace SchedualApp
                     {
                         l.LecturerID,
                         FullName = $"{l.FirstName} {l.LastName}",
-                        l.AcademicRank,
-                        l.MaxWorkload,
-                        l.IsActive
+                        l.AcademicRank
                     }).ToList();
 
                     if (_lecturerGrid.Rows.Count > 0)
@@ -559,6 +556,16 @@ namespace SchedualApp
         }
 
         private void _btnDelete_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label6_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void tableLayoutPanel1_Paint(object sender, PaintEventArgs e)
         {
 
         }

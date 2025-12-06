@@ -33,12 +33,9 @@
             this._btnDelete = new System.Windows.Forms.Button();
             this._btnSave = new System.Windows.Forms.Button();
             this._btnNew = new System.Windows.Forms.Button();
-            this._chkIsActive = new System.Windows.Forms.CheckBox();
-            this._txtMaxWorkload = new System.Windows.Forms.TextBox();
             this._txtAcademicRank = new System.Windows.Forms.TextBox();
             this._txtLastName = new System.Windows.Forms.TextBox();
             this._txtFirstName = new System.Windows.Forms.TextBox();
-            this.label5 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
@@ -78,7 +75,7 @@
             this._dataGridsLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this._dataGridsLayout.Controls.Add(this._lecturerFormPanel, 0, 1);
             this._dataGridsLayout.Dock = System.Windows.Forms.DockStyle.Fill;
-            this._dataGridsLayout.Location = new System.Drawing.Point(6, 6);
+            this._dataGridsLayout.Location = new System.Drawing.Point(762, 6);
             this._dataGridsLayout.Margin = new System.Windows.Forms.Padding(4);
             this._dataGridsLayout.Name = "_dataGridsLayout";
             this._dataGridsLayout.RowCount = 2;
@@ -92,12 +89,9 @@
             this._lecturerFormPanel.Controls.Add(this._btnDelete);
             this._lecturerFormPanel.Controls.Add(this._btnSave);
             this._lecturerFormPanel.Controls.Add(this._btnNew);
-            this._lecturerFormPanel.Controls.Add(this._chkIsActive);
-            this._lecturerFormPanel.Controls.Add(this._txtMaxWorkload);
             this._lecturerFormPanel.Controls.Add(this._txtAcademicRank);
             this._lecturerFormPanel.Controls.Add(this._txtLastName);
             this._lecturerFormPanel.Controls.Add(this._txtFirstName);
-            this._lecturerFormPanel.Controls.Add(this.label5);
             this._lecturerFormPanel.Controls.Add(this.label4);
             this._lecturerFormPanel.Controls.Add(this.label3);
             this._lecturerFormPanel.Controls.Add(this.label2);
@@ -110,52 +104,36 @@
             // 
             // _btnDelete
             // 
-            this._btnDelete.Location = new System.Drawing.Point(42, 255);
+            this._btnDelete.BackColor = System.Drawing.Color.Red;
+            this._btnDelete.Location = new System.Drawing.Point(43, 150);
             this._btnDelete.Margin = new System.Windows.Forms.Padding(4);
             this._btnDelete.Name = "_btnDelete";
             this._btnDelete.Size = new System.Drawing.Size(119, 28);
             this._btnDelete.TabIndex = 12;
             this._btnDelete.Text = "حذف";
-            this._btnDelete.UseVisualStyleBackColor = true;
+            this._btnDelete.UseVisualStyleBackColor = false;
             // 
             // _btnSave
             // 
-            this._btnSave.Location = new System.Drawing.Point(199, 255);
+            this._btnSave.BackColor = System.Drawing.SystemColors.MenuHighlight;
+            this._btnSave.Location = new System.Drawing.Point(188, 150);
             this._btnSave.Margin = new System.Windows.Forms.Padding(4);
             this._btnSave.Name = "_btnSave";
             this._btnSave.Size = new System.Drawing.Size(103, 28);
             this._btnSave.TabIndex = 11;
             this._btnSave.Text = "حفظ";
-            this._btnSave.UseVisualStyleBackColor = true;
+            this._btnSave.UseVisualStyleBackColor = false;
             // 
             // _btnNew
             // 
-            this._btnNew.Location = new System.Drawing.Point(326, 255);
+            this._btnNew.BackColor = System.Drawing.SystemColors.ActiveCaption;
+            this._btnNew.Location = new System.Drawing.Point(316, 150);
             this._btnNew.Margin = new System.Windows.Forms.Padding(4);
             this._btnNew.Name = "_btnNew";
             this._btnNew.Size = new System.Drawing.Size(110, 28);
             this._btnNew.TabIndex = 10;
             this._btnNew.Text = "جديد";
-            this._btnNew.UseVisualStyleBackColor = true;
-            // 
-            // _chkIsActive
-            // 
-            this._chkIsActive.AutoSize = true;
-            this._chkIsActive.Location = new System.Drawing.Point(269, 153);
-            this._chkIsActive.Margin = new System.Windows.Forms.Padding(4);
-            this._chkIsActive.Name = "_chkIsActive";
-            this._chkIsActive.Size = new System.Drawing.Size(49, 20);
-            this._chkIsActive.TabIndex = 9;
-            this._chkIsActive.Text = "نشط";
-            this._chkIsActive.UseVisualStyleBackColor = true;
-            // 
-            // _txtMaxWorkload
-            // 
-            this._txtMaxWorkload.Location = new System.Drawing.Point(105, 119);
-            this._txtMaxWorkload.Margin = new System.Windows.Forms.Padding(4);
-            this._txtMaxWorkload.Name = "_txtMaxWorkload";
-            this._txtMaxWorkload.Size = new System.Drawing.Size(152, 22);
-            this._txtMaxWorkload.TabIndex = 8;
+            this._btnNew.UseVisualStyleBackColor = false;
             // 
             // _txtAcademicRank
             // 
@@ -164,6 +142,7 @@
             this._txtAcademicRank.Name = "_txtAcademicRank";
             this._txtAcademicRank.Size = new System.Drawing.Size(152, 22);
             this._txtAcademicRank.TabIndex = 7;
+            this._txtAcademicRank.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // _txtLastName
             // 
@@ -172,6 +151,7 @@
             this._txtLastName.Name = "_txtLastName";
             this._txtLastName.Size = new System.Drawing.Size(152, 22);
             this._txtLastName.TabIndex = 6;
+            this._txtLastName.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // _txtFirstName
             // 
@@ -180,16 +160,7 @@
             this._txtFirstName.Name = "_txtFirstName";
             this._txtFirstName.Size = new System.Drawing.Size(152, 22);
             this._txtFirstName.TabIndex = 5;
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(267, 119);
-            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(88, 16);
-            this.label5.TabIndex = 4;
-            this.label5.Text = "أقصى عبء عمل:";
+            this._txtFirstName.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label4
             // 
@@ -232,48 +203,53 @@
             // 
             // tableLayoutPanel1
             // 
+            this.tableLayoutPanel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.tableLayoutPanel1.ColumnCount = 2;
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel1.Controls.Add(this._availabilityGrid, 0, 0);
             this.tableLayoutPanel1.Controls.Add(this._courseLecturerGrid, 1, 0);
-            this.tableLayoutPanel1.Location = new System.Drawing.Point(649, 416);
+            this.tableLayoutPanel1.Controls.Add(this._availabilityGrid, 0, 0);
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(5, 416);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 1;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(740, 338);
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 356F));
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(748, 356);
             this.tableLayoutPanel1.TabIndex = 1;
+            this.tableLayoutPanel1.Paint += new System.Windows.Forms.PaintEventHandler(this.tableLayoutPanel1_Paint);
             // 
             // _courseLecturerGrid
             // 
             this._courseLecturerGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this._courseLecturerGrid.Location = new System.Drawing.Point(374, 4);
+            this._courseLecturerGrid.Location = new System.Drawing.Point(8, 4);
             this._courseLecturerGrid.Margin = new System.Windows.Forms.Padding(4);
             this._courseLecturerGrid.Name = "_courseLecturerGrid";
             this._courseLecturerGrid.RowHeadersWidth = 51;
-            this._courseLecturerGrid.Size = new System.Drawing.Size(362, 333);
+            this._courseLecturerGrid.Size = new System.Drawing.Size(362, 291);
             this._courseLecturerGrid.TabIndex = 0;
             // 
             // _availabilityGrid
             // 
             this._availabilityGrid.AllowUserToOrderColumns = true;
             this._availabilityGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this._availabilityGrid.Location = new System.Drawing.Point(4, 4);
+            this._availabilityGrid.Location = new System.Drawing.Point(378, 4);
             this._availabilityGrid.Margin = new System.Windows.Forms.Padding(4);
             this._availabilityGrid.Name = "_availabilityGrid";
             this._availabilityGrid.RowHeadersWidth = 51;
-            this._availabilityGrid.Size = new System.Drawing.Size(362, 329);
+            this._availabilityGrid.Size = new System.Drawing.Size(366, 292);
             this._availabilityGrid.TabIndex = 0;
             // 
             // _lecturerGrid
             // 
+            this._lecturerGrid.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this._lecturerGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this._lecturerGrid.Location = new System.Drawing.Point(4, 4);
             this._lecturerGrid.Margin = new System.Windows.Forms.Padding(4);
             this._lecturerGrid.Name = "_lecturerGrid";
             this._lecturerGrid.RowHeadersWidth = 51;
-            this._lecturerGrid.Size = new System.Drawing.Size(735, 372);
+            this._lecturerGrid.Size = new System.Drawing.Size(738, 372);
             this._lecturerGrid.TabIndex = 0;
             // 
             // _detailsLayout
@@ -283,7 +259,7 @@
             this._detailsLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this._detailsLayout.Controls.Add(this._lecturerGrid, 0, 0);
             this._detailsLayout.Dock = System.Windows.Forms.DockStyle.Fill;
-            this._detailsLayout.Location = new System.Drawing.Point(650, 6);
+            this._detailsLayout.Location = new System.Drawing.Point(6, 6);
             this._detailsLayout.Margin = new System.Windows.Forms.Padding(4);
             this._detailsLayout.Name = "_detailsLayout";
             this._detailsLayout.RowCount = 1;
@@ -323,7 +299,7 @@
             this._formsLayout.Controls.Add(this._availabilityFormPanel, 1, 0);
             this._formsLayout.Controls.Add(this._courseLecturerFormPanel, 0, 0);
             this._formsLayout.Dock = System.Windows.Forms.DockStyle.Fill;
-            this._formsLayout.Location = new System.Drawing.Point(6, 417);
+            this._formsLayout.Location = new System.Drawing.Point(762, 417);
             this._formsLayout.Margin = new System.Windows.Forms.Padding(4);
             this._formsLayout.Name = "_formsLayout";
             this._formsLayout.RowCount = 1;
@@ -336,7 +312,7 @@
             // 
             this._availabilityFormPanel.Controls.Add(this.label6);
             this._availabilityFormPanel.Controls.Add(this._availabilityListBox);
-            this._availabilityFormPanel.Location = new System.Drawing.Point(321, 4);
+            this._availabilityFormPanel.Location = new System.Drawing.Point(4, 4);
             this._availabilityFormPanel.Margin = new System.Windows.Forms.Padding(4);
             this._availabilityFormPanel.Name = "_availabilityFormPanel";
             this._availabilityFormPanel.Size = new System.Drawing.Size(309, 346);
@@ -344,16 +320,20 @@
             // 
             // label6
             // 
+            this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(4, 12);
+            this.label6.Location = new System.Drawing.Point(169, 12);
             this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(83, 16);
             this.label6.TabIndex = 1;
             this.label6.Text = "الأوقات المتاحة:";
+            this.label6.Click += new System.EventHandler(this.label6_Click);
             // 
             // _availabilityListBox
             // 
+            this._availabilityListBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this._availabilityListBox.FormattingEnabled = true;
             this._availabilityListBox.Location = new System.Drawing.Point(10, 32);
             this._availabilityListBox.Margin = new System.Windows.Forms.Padding(4);
@@ -365,7 +345,7 @@
             // 
             this._courseLecturerFormPanel.Controls.Add(this.label8);
             this._courseLecturerFormPanel.Controls.Add(this._courseListBox);
-            this._courseLecturerFormPanel.Location = new System.Drawing.Point(4, 4);
+            this._courseLecturerFormPanel.Location = new System.Drawing.Point(321, 4);
             this._courseLecturerFormPanel.Margin = new System.Windows.Forms.Padding(4);
             this._courseLecturerFormPanel.Name = "_courseLecturerFormPanel";
             this._courseLecturerFormPanel.Size = new System.Drawing.Size(309, 346);
@@ -373,8 +353,9 @@
             // 
             // label8
             // 
+            this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(40, 12);
+            this.label8.Location = new System.Drawing.Point(167, 12);
             this.label8.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(90, 16);
@@ -383,6 +364,8 @@
             // 
             // _courseListBox
             // 
+            this._courseListBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this._courseListBox.FormattingEnabled = true;
             this._courseListBox.Location = new System.Drawing.Point(12, 32);
             this._courseListBox.Margin = new System.Windows.Forms.Padding(4);
@@ -397,6 +380,7 @@
             this.Controls.Add(this._mainLayout);
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "LecturerManagementControl";
+            this.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
             this.Size = new System.Drawing.Size(1402, 777);
             this._dataGridsLayout.ResumeLayout(false);
             this._lecturerFormPanel.ResumeLayout(false);
@@ -424,18 +408,14 @@
         private System.Windows.Forms.Button _btnDelete;
         private System.Windows.Forms.Button _btnSave;
         private System.Windows.Forms.Button _btnNew;
-        private System.Windows.Forms.CheckBox _chkIsActive;
-        private System.Windows.Forms.TextBox _txtMaxWorkload;
         private System.Windows.Forms.TextBox _txtAcademicRank;
         private System.Windows.Forms.TextBox _txtLastName;
         private System.Windows.Forms.TextBox _txtFirstName;
-        private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
-        private System.Windows.Forms.DataGridView _availabilityGrid;
         private System.Windows.Forms.DataGridView _courseLecturerGrid;
         private System.Windows.Forms.DataGridView _lecturerGrid;
         private System.Windows.Forms.TableLayoutPanel _detailsLayout;
@@ -447,5 +427,6 @@
         private System.Windows.Forms.Panel _courseLecturerFormPanel;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.CheckedListBox _courseListBox;
+        private System.Windows.Forms.DataGridView _availabilityGrid;
     }
 }
