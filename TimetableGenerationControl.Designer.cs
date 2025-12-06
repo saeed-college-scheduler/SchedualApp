@@ -31,6 +31,7 @@
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.dgvTimetable = new System.Windows.Forms.DataGridView();
             this.panelControls = new System.Windows.Forms.Panel();
+            this.btnExportExcel = new System.Windows.Forms.Button();
             this.btnDelete = new System.Windows.Forms.Button();
             this.lstArchivedTimetables = new System.Windows.Forms.ListBox();
             this.label5 = new System.Windows.Forms.Label();
@@ -44,7 +45,6 @@
             this.cboDepartment = new System.Windows.Forms.ComboBox();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
-            this.btnExportExcel = new System.Windows.Forms.Button();
             this.tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvTimetable)).BeginInit();
             this.panelControls.SuspendLayout();
@@ -72,7 +72,7 @@
             this.dgvTimetable.AllowUserToDeleteRows = false;
             this.dgvTimetable.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvTimetable.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dgvTimetable.Location = new System.Drawing.Point(404, 4);
+            this.dgvTimetable.Location = new System.Drawing.Point(4, 4);
             this.dgvTimetable.Margin = new System.Windows.Forms.Padding(4);
             this.dgvTimetable.Name = "dgvTimetable";
             this.dgvTimetable.ReadOnly = true;
@@ -98,26 +98,39 @@
             this.panelControls.Controls.Add(this.label2);
             this.panelControls.Controls.Add(this.label1);
             this.panelControls.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelControls.Location = new System.Drawing.Point(4, 4);
+            this.panelControls.Location = new System.Drawing.Point(671, 4);
             this.panelControls.Margin = new System.Windows.Forms.Padding(4);
             this.panelControls.Name = "panelControls";
             this.panelControls.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
             this.panelControls.Size = new System.Drawing.Size(392, 730);
             this.panelControls.TabIndex = 1;
             // 
+            // btnExportExcel
+            // 
+            this.btnExportExcel.BackColor = System.Drawing.SystemColors.ActiveBorder;
+            this.btnExportExcel.Location = new System.Drawing.Point(287, 469);
+            this.btnExportExcel.Name = "btnExportExcel";
+            this.btnExportExcel.Size = new System.Drawing.Size(75, 23);
+            this.btnExportExcel.TabIndex = 13;
+            this.btnExportExcel.Text = "تحميل";
+            this.btnExportExcel.UseVisualStyleBackColor = false;
+            this.btnExportExcel.Click += new System.EventHandler(this.btnExportExcel_Click);
+            // 
             // btnDelete
             // 
+            this.btnDelete.BackColor = System.Drawing.Color.Red;
             this.btnDelete.Location = new System.Drawing.Point(12, 464);
             this.btnDelete.Margin = new System.Windows.Forms.Padding(4);
             this.btnDelete.Name = "btnDelete";
             this.btnDelete.Size = new System.Drawing.Size(100, 28);
             this.btnDelete.TabIndex = 12;
             this.btnDelete.Text = "حذف الجدول";
-            this.btnDelete.UseVisualStyleBackColor = true;
+            this.btnDelete.UseVisualStyleBackColor = false;
             this.btnDelete.Click += new System.EventHandler(this.BtnDelete_Click);
             // 
             // lstArchivedTimetables
             // 
+            this.lstArchivedTimetables.BackColor = System.Drawing.SystemColors.ActiveCaption;
             this.lstArchivedTimetables.FormattingEnabled = true;
             this.lstArchivedTimetables.ItemHeight = 16;
             this.lstArchivedTimetables.Location = new System.Drawing.Point(12, 254);
@@ -159,13 +172,14 @@
             // 
             // btnGenerate
             // 
+            this.btnGenerate.BackColor = System.Drawing.SystemColors.ActiveCaption;
             this.btnGenerate.Location = new System.Drawing.Point(12, 148);
             this.btnGenerate.Margin = new System.Windows.Forms.Padding(4);
             this.btnGenerate.Name = "btnGenerate";
             this.btnGenerate.Size = new System.Drawing.Size(368, 28);
             this.btnGenerate.TabIndex = 7;
             this.btnGenerate.Text = "إنشاء الجدول";
-            this.btnGenerate.UseVisualStyleBackColor = true;
+            this.btnGenerate.UseVisualStyleBackColor = false;
             this.btnGenerate.Click += new System.EventHandler(this.btnGenerate_Click);
             // 
             // txtTimetableName
@@ -175,6 +189,7 @@
             this.txtTimetableName.Name = "txtTimetableName";
             this.txtTimetableName.Size = new System.Drawing.Size(265, 22);
             this.txtTimetableName.TabIndex = 6;
+            this.txtTimetableName.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label4
             // 
@@ -182,9 +197,9 @@
             this.label4.Location = new System.Drawing.Point(287, 119);
             this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(62, 16);
+            this.label4.Size = new System.Drawing.Size(59, 16);
             this.label4.TabIndex = 5;
-            this.label4.Text = "اسم الجدول:";
+            this.label4.Text = "اسم الجدول";
             // 
             // cboLevel
             // 
@@ -201,9 +216,9 @@
             this.label3.Location = new System.Drawing.Point(287, 86);
             this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(93, 16);
+            this.label3.Size = new System.Drawing.Size(35, 16);
             this.label3.TabIndex = 3;
-            this.label3.Text = "المستوى الدراسي:";
+            this.label3.Text = "الفصل";
             // 
             // cboDepartment
             // 
@@ -220,9 +235,9 @@
             this.label2.Location = new System.Drawing.Point(287, 53);
             this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(35, 16);
+            this.label2.Size = new System.Drawing.Size(32, 16);
             this.label2.TabIndex = 1;
-            this.label2.Text = "القسم:";
+            this.label2.Text = "القسم";
             // 
             // label1
             // 
@@ -235,16 +250,6 @@
             this.label1.TabIndex = 0;
             this.label1.Text = "لوحة الإنشاء";
             // 
-            // btnExportExcel
-            // 
-            this.btnExportExcel.Location = new System.Drawing.Point(287, 469);
-            this.btnExportExcel.Name = "btnExportExcel";
-            this.btnExportExcel.Size = new System.Drawing.Size(75, 23);
-            this.btnExportExcel.TabIndex = 13;
-            this.btnExportExcel.Text = "تحميل";
-            this.btnExportExcel.UseVisualStyleBackColor = true;
-            this.btnExportExcel.Click += new System.EventHandler(this.btnExportExcel_Click);
-            // 
             // TimetableGenerationControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -252,6 +257,7 @@
             this.Controls.Add(this.tableLayoutPanel1);
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "TimetableGenerationControl";
+            this.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
             this.Size = new System.Drawing.Size(1067, 738);
             this.tableLayoutPanel1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dgvTimetable)).EndInit();

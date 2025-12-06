@@ -29,10 +29,6 @@ namespace SchedualApp
         [StringLength(50)]
         public string AcademicRank { get; set; }
 
-        public int MaxWorkload { get; set; }
-
-        public bool IsActive { get; set; }
-
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<CourseLecturer> CourseLecturers { get; set; }
 

@@ -1,9 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using GeneticSharp.Domain.Chromosomes;
 using GeneticSharp.Domain.Fitnesses;
-using SchedualApp.GeneticAlgorithm; // تمت الإضافة
+using System;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace SchedualApp.GeneticAlgorithm
 {
@@ -11,17 +10,17 @@ namespace SchedualApp.GeneticAlgorithm
     {
         private readonly DataManager _dataManager;
 
-        public TimetableFitness(DataManager dataManager)
-        {
-            _dataManager = dataManager;
-        }
+        // العقوبات المطلوبة
+        private const double HARD_CONSTRAINT_PENALTY = 10000.0;
+        private const double SOFT_CONSTRAINT_PENALTY = 100.0;
+
+        public TimetableFitness(DataManager dataManager) => _dataManager = dataManager;
 
         public double Evaluate(IChromosome chromosome)
         {
             var timetable = (TimetableChromosome)chromosome;
-            // **إصلاح الخطأ CS1503**: استخدام GetGenes() للحصول على قائمة الجينات الرسمية
-            var slots = timetable.GetGenes();
-            double fitness = 1000000.0; // قيمة لياقة ابتدائية عالية
+            var slots = timetable.GenesList;
+            double fitness = 1000000.0;
 
             // استدعاء الدوال المساعدة بشكل صحيح
             fitness -= CheckHardConstraints(slots);
@@ -30,108 +29,82 @@ namespace SchedualApp.GeneticAlgorithm
             return Math.Max(0, fitness);
         }
 
-        private double CheckHardConstraints(IList<Gene> slots)
+        // تم جعل الدوال private لتجنب خطأ CS0121
+        private double CheckHardConstraints(List<ScheduleSlot> slots)
         {
             double penalty = 0;
-            const double HARD_PENALTY = 500000; // عقوبة قاسية جداً
+            var groups = slots.GroupBy(s => new { s.DayOfWeek, s.TimeSlotDefinitionID });
 
-            // **الخطوة الحاسمة:** تحويل قائمة الجينات إلى قائمة من RequiredSlot
-            // هذا يحل مشكلة الوصول إلى الخصائص
-            var requiredSlots = slots.Select(g => (RequiredSlot)g.Value).ToList();
+            foreach (var group in groups)
+            {
+                // 1. تعارض قاعة
+                penalty += (group.GroupBy(g => g.RoomID).Where(c => c.Count() > 1).Count() * HARD_CONSTRAINT_PENALTY);
 
-            // 1. التحقق من تعارض الدفعة (نفس الدفعة في نفس الوقت)
-            var studentGroupConflicts = requiredSlots
-                // تجميع الجينات حسب اليوم والفترة الزمنية
-                .GroupBy(s => new { s.DayOfWeek, s.TimeSlotDefinitionID })
-                // داخل كل فترة زمنية، تجميع الجينات حسب الدفعة (القسم والمستوى)
-                .SelectMany(g => g.GroupBy(s => new { s.DepartmentID, s.LevelID }))
-                // تحديد المجموعات التي تحتوي على أكثر من جين واحد (تعارض)
-                .Where(g => g.Count() > 1)
-                .Sum(g => g.Count() - 1);
+                // 2. تعارض مدرس محلي
+                penalty += (group.GroupBy(g => g.LecturerID).Where(c => c.Count() > 1).Count() * HARD_CONSTRAINT_PENALTY);
+                if (group.Count() > 1)
+                {
+                    // نضرب في (العدد - 1) لنعاقب كل حصة زائدة
+                    penalty += (group.Count() - 1) * HARD_CONSTRAINT_PENALTY;
+                }
+            }
 
-            penalty += studentGroupConflicts * HARD_PENALTY;
+            foreach (var slot in slots)
+            {
+                // 3. القائمة السوداء (Blacklist)
+                if (_dataManager.IsGloballyBlacklisted(slot.DayOfWeek, slot.TimeSlotDefinitionID, slot.LecturerID) ||
+                    _dataManager.IsGloballyBlacklisted(slot.DayOfWeek, slot.TimeSlotDefinitionID, slot.RoomID))
+                {
+                    penalty += HARD_CONSTRAINT_PENALTY;
+                }
+                // --- الفحص الجديد لنوع القاعة (Hard Constraint) ---
+                var room = _dataManager.GetRoom(slot.RoomID);
+                if (room != null)
+                {
+                    // إذا الحصة عملي والقاعة ليست معملاً -> كارثة (عقوبة قصوى)
+                    if (slot.SlotType == "Practical" && room.RoomType != "Practical")
+                    {
+                        penalty += HARD_CONSTRAINT_PENALTY;
+                    }
 
-            // 2. التحقق من توافر المحاضرين (Lecturer Availability)
-            var unavailableLecturerSlots = requiredSlots
-                .Where(s => !_dataManager.LecturerAvailabilities.Any(la =>
-                    la.LecturerID == s.LecturerID &&
-                    la.DayOfWeek == s.DayOfWeek &&
-                    la.TimeSlotDefinitionID == s.TimeSlotDefinitionID))
-                .Count();
-
-            penalty += unavailableLecturerSlots * HARD_PENALTY;
-
-            // 3. تعارض القاعات (Room Conflict)
-            var roomConflicts = requiredSlots
-                .GroupBy(s => new { s.DayOfWeek, s.TimeSlotDefinitionID, s.RoomID })
-                .Where(g => g.Count() > 1)
-                .Sum(g => g.Count() - 1);
-
-            penalty += roomConflicts * HARD_PENALTY;
-
-            // 4. تعارض المحاضرين (Lecturer Conflict - محاضر واحد في مكانين)
-            var lecturerConflicts = requiredSlots
-                .GroupBy(s => new { s.DayOfWeek, s.TimeSlotDefinitionID, s.LecturerID })
-                .Where(g => g.Count() > 1)
-                .Sum(g => g.Count() - 1);
-
-            penalty += lecturerConflicts * HARD_PENALTY;
-
-            // 5. القائمة السوداء العالمية (Global Blacklist)
-            var blacklistConflicts = requiredSlots
-                .Where(s => _dataManager.IsGloballyBlacklisted(s.DayOfWeek, s.TimeSlotDefinitionID, s.LecturerID) ||
-                            _dataManager.IsGloballyBlacklisted(s.DayOfWeek, s.TimeSlotDefinitionID, s.RoomID))
-                .Count();
-
-            penalty += blacklistConflicts * HARD_PENALTY;
+                    // إذا الحصة نظري والقاعة معمل -> أيضاً نمنعها (أو نجعلها عقوبة عالية جداً)
+                    // إذا كنت تقبل بوجود نظري في معمل عند الضرورة، يمكنك تخفيف العقوبة هنا قليلاً
+                    else if (slot.SlotType == "Lecture" && room.RoomType == "Practical")
+                    {
+                        penalty += HARD_CONSTRAINT_PENALTY; // منع تام للخلط
+                    }
+                }
+            }
 
             return penalty;
         }
 
-        private double CheckSoftConstraints(IList<Gene> slots)
+        // تم جعل الدوال private لتجنب خطأ CS0121
+        private double CheckSoftConstraints(List<ScheduleSlot> slots)
         {
             double penalty = 0;
-            const double SOFT_PENALTY = 1000; // عقوبة مرنة
-
-            // **الخطوة الحاسمة:** تحويل قائمة الجينات إلى قائمة من RequiredSlot
-            var requiredSlots = slots.Select(g => (RequiredSlot)g.Value).ToList();
-
-            // 1. تجميع المحاضرات للمحاضر (Lecturer Lecture Spreading)
-            var lecturerDaySlots = requiredSlots
-                .GroupBy(s => new { s.LecturerID, s.DayOfWeek })
-                .Where(g => g.Count() > 1);
-
-            foreach (var group in lecturerDaySlots)
+            foreach (var slot in slots)
             {
-                var orderedSlots = group.OrderBy(s => s.TimeSlotDefinitionID).ToList();
-                for (int i = 0; i < orderedSlots.Count - 1; i++)
+                // 1. قيد توافر المحاضرين
+                if (!_dataManager.IsLecturerAvailable(slot.LecturerID, slot.DayOfWeek, slot.TimeSlotDefinitionID))
                 {
-                    // عقوبة على كل فجوة بين المحاضرات
-                    if (orderedSlots[i + 1].TimeSlotDefinitionID - orderedSlots[i].TimeSlotDefinitionID > 1)
+                    penalty += SOFT_CONSTRAINT_PENALTY * 5;
+                }
+
+                // 2. تعارض نوع القاعة
+                var room = _dataManager.GetRoom(slot.RoomID);
+                if (room != null)
+                {
+                    if (slot.SlotType == "Practical" && room.RoomType != "Lab")
                     {
-                        penalty += SOFT_PENALTY * 0.5;
+                        penalty += SOFT_CONSTRAINT_PENALTY;
+                    }
+                    else if (slot.SlotType == "Lecture" && room.RoomType == "Lab")
+                    {
+                        penalty += SOFT_CONSTRAINT_PENALTY * 0.5;
                     }
                 }
             }
-
-            // 2. تجميع المحاضرات للدفعة (Student Group Spreading)
-            var studentDaySlots = requiredSlots
-                .GroupBy(s => new { s.DepartmentID, s.LevelID, s.DayOfWeek })
-                .Where(g => g.Count() > 1);
-
-            foreach (var group in studentDaySlots)
-            {
-                var orderedSlots = group.OrderBy(s => s.TimeSlotDefinitionID).ToList();
-                for (int i = 0; i < orderedSlots.Count - 1; i++)
-                {
-                    // عقوبة على كل فجوة بين المحاضرات
-                    if (orderedSlots[i + 1].TimeSlotDefinitionID - orderedSlots[i].TimeSlotDefinitionID > 1)
-                    {
-                        penalty += SOFT_PENALTY * 0.5;
-                    }
-                }
-            }
-
             return penalty;
         }
     }
